@@ -8,7 +8,7 @@ Donkey API 관리자 대시보드.
 
 1. 새 레포 생성 후 이 폴더 **내용 전체**를 루트에 복사
 2. `npm install && npm run build`
-3. Vercel 등에 배포 시 환경 변수 `VITE_API_BASE` 설정 (Donkey API URL)
+3. Vercel 등에 배포 시 `VITE_API_BASE=https://donkey.ai.kr` 설정 (API는 백엔드 도메인으로 요청)
 4. Donkey 백엔드에 Admin 도메인 CORS 허용
 
 ## 로컬 개발
