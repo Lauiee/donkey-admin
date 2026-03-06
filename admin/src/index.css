@@ -1,0 +1,26 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --admin-accent: 99 102 241; /* indigo-500 */
+  --admin-accent-hover: 79 70 229; /* indigo-600 */
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* SaaS 스타일: 카드·입력 포커스 통일 */
+@layer components {
+  .admin-card {
+    @apply bg-white rounded-xl border border-slate-200/80 shadow-sm;
+  }
+  .admin-page-title {
+    @apply text-2xl font-semibold text-slate-900 tracking-tight;
+  }
+}
