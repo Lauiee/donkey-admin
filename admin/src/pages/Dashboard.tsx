@@ -182,7 +182,15 @@ export function Dashboard() {
               API 사용 현황을 한눈에 확인하세요.
             </p>
           </div>
-          <ServerStatusBadge />
+          {projects.length > 0 && (
+            <ProjectSelect
+              value={selectedProject}
+              onChange={handleProjectChange}
+              projects={projects}
+              placeholder="전체"
+              className="shrink-0"
+            />
+          )}
         </div>
         <div className="admin-card p-8 text-slate-500">불러오는 중...</div>
       </div>
@@ -199,7 +207,15 @@ export function Dashboard() {
               API 사용 현황을 한눈에 확인하세요.
             </p>
           </div>
-          <ServerStatusBadge />
+          {projects.length > 0 && (
+            <ProjectSelect
+              value={selectedProject}
+              onChange={handleProjectChange}
+              projects={projects}
+              placeholder="전체"
+              className="shrink-0"
+            />
+          )}
         </div>
         <div className="admin-card p-8 text-red-600">
           {error ?? "데이터 없음"}
