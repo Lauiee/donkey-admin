@@ -438,6 +438,23 @@ export async function getInquiryDetail(id: string): Promise<InquiryDetail> {
   return res.json();
 }
 
+export async function deleteInquiry(id: string): Promise<void> {
+  const res = await fetch(
+    `${API_BASE}/admin/api/inquiries/${encodeURIComponent(id)}`,
+    { method: "DELETE", headers: getHeaders() }
+  );
+  if (!res.ok) {
+    const body = (await res.json().catch(() => ({}))) as {
+      detail?: string | { message?: string };
+    };
+    const msg =
+      (typeof body?.detail === "string"
+        ? body.detail
+        : body?.detail?.message) || `삭제 실패 (${res.status})`;
+    throw new Error(msg);
+  }
+}
+
 export async function updateInquiryStatus(
   id: string,
   status: string

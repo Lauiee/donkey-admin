@@ -1,17 +1,6 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
-import {
-  getInquiryDetail,
-  updateInquiryStatus,
-  createInquiryReply,
-  type InquiryDetail,
-} from "../api";
-
-const STATUS_OPTIONS = [
-  { value: "pending", label: "대기중" },
-  { value: "in_progress", label: "처리 중" },
-  { value: "completed", label: "완료" },
-] as const;
+import { Link, useParams, useNavigate } from "react-router-dom";
+import { deleteInquiry, getInquiryDetail, type InquiryDetail } from "../api";
 
 function statusLabel(s: string) {
   const map: Record<string, string> = {
@@ -48,12 +37,11 @@ function formatDate(iso: string) {
 
 export function InquiryDetail() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [detail, setDetail] = useState<InquiryDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [statusUpdating, setStatusUpdating] = useState(false);
-  const [replyBody, setReplyBody] = useState("");
-  const [replySubmitting, setReplySubmitting] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -76,32 +64,17 @@ export function InquiryDetail() {
     };
   }, [id]);
 
-  const handleStatusChange = async (newStatus: string) => {
-    if (!id || !detail) return;
-    setStatusUpdating(true);
+  const handleDelete = async () => {
+    if (!id) return;
+    if (!window.confirm("이 문의를 삭제하시겠습니까?")) return;
+    setDeleting(true);
     try {
-      await updateInquiryStatus(id, newStatus);
-      setDetail((prev) => (prev ? { ...prev, status: newStatus } : null));
+      await deleteInquiry(id);
+      navigate("/inquiry", { replace: true });
     } catch (e) {
-      alert(e instanceof Error ? e.message : "상태 변경 실패");
+      alert(e instanceof Error ? e.message : "삭제 실패");
     } finally {
-      setStatusUpdating(false);
-    }
-  };
-
-  const handleSubmitReply = async () => {
-    if (!id || !replyBody.trim()) return;
-    setReplySubmitting(true);
-    try {
-      const newReply = await createInquiryReply(id, replyBody.trim());
-      setDetail((prev) =>
-        prev ? { ...prev, replies: [...prev.replies, newReply] } : null
-      );
-      setReplyBody("");
-    } catch (e) {
-      alert(e instanceof Error ? e.message : "답변 등록 실패");
-    } finally {
-      setReplySubmitting(false);
+      setDeleting(false);
     }
   };
 
@@ -131,13 +104,23 @@ export function InquiryDetail() {
 
   return (
     <div>
-      <div className="flex items-center gap-2 mb-6">
+      <div className="flex items-center justify-between gap-4 mb-6">
         <Link
           to="/inquiry"
           className="text-sm text-slate-500 hover:text-slate-700"
         >
           ← 문의
         </Link>
+        {detail.status === "pending" && (
+          <button
+            type="button"
+            onClick={handleDelete}
+            disabled={deleting}
+            className="px-3 py-1.5 rounded-lg text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 disabled:opacity-50"
+          >
+            {deleting ? "삭제 중…" : "문의 삭제"}
+          </button>
+        )}
       </div>
 
       <div className="admin-card overflow-hidden mb-6">
@@ -159,26 +142,6 @@ export function InquiryDetail() {
               <span>프로젝트: {detail.project_name ?? detail.project_id}</span>
             )}
             <span>등록: {formatDate(detail.created_at)}</span>
-          </div>
-          <div className="flex items-center gap-3 mt-4">
-            <span className="text-sm text-slate-600">상태 변경</span>
-            <div className="flex rounded-lg overflow-hidden border border-slate-200">
-              {STATUS_OPTIONS.map((opt) => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={() => handleStatusChange(opt.value)}
-                  disabled={statusUpdating || detail.status === opt.value}
-                  className={`px-3 py-1.5 text-sm font-medium transition-colors ${
-                    detail.status === opt.value
-                      ? "bg-indigo-500 text-white"
-                      : "bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-50"
-                  }`}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
           </div>
         </div>
         <div className="p-6">
@@ -207,26 +170,6 @@ export function InquiryDetail() {
           </ul>
         </div>
       )}
-
-      {/* 답변 작성 */}
-      <div className="admin-card p-6">
-        <h3 className="font-semibold text-slate-800 mb-3">답변 작성</h3>
-        <textarea
-          value={replyBody}
-          onChange={(e) => setReplyBody(e.target.value)}
-          placeholder="답변 내용을 입력하세요."
-          rows={4}
-          className="w-full px-4 py-3 rounded-lg border border-slate-200 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-        />
-        <button
-          type="button"
-          onClick={handleSubmitReply}
-          disabled={!replyBody.trim() || replySubmitting}
-          className="mt-3 px-4 py-2 rounded-lg text-sm font-medium bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 disabled:pointer-events-none"
-        >
-          {replySubmitting ? "등록 중…" : "답변 등록"}
-        </button>
-      </div>
     </div>
   );
 }
