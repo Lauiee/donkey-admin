@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { AdminLayout } from "./layout/AdminLayout";
+import { Billing } from "./pages/Billing";
 import { Dashboard } from "./pages/Dashboard";
 import { History } from "./pages/History";
 import { HistoryDetail } from "./pages/HistoryDetail";
@@ -16,6 +17,7 @@ function App() {
           <Route index element={<Navigate to="/dashboard" replace />} />
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="usage" element={<Usage />} />
+          <Route path="billing" element={<Billing />} />
           <Route path="history" element={<History />} />
           <Route path="history/:jobId" element={<HistoryDetail />} />
         </Route>

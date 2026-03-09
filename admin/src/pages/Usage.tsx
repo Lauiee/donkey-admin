@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { ProjectSelect } from "../components/ProjectSelect";
 import {
   getProjects,
@@ -7,6 +7,7 @@ import {
   type ProjectItem,
   type UsageStats,
 } from "../api";
+import { calcUsageCost, formatWon } from "../billing";
 
 function formatDateForInput(d: Date): string {
   const y = d.getFullYear();
@@ -143,7 +144,7 @@ export function Usage() {
           {/* 선택 기간 요약 */}
           <div className="admin-card p-5 mb-8">
             <h3 className="font-medium text-slate-800 mb-3">선택 기간 요약</h3>
-            <div className="flex flex-wrap gap-6 text-sm">
+            <div className="flex flex-wrap gap-6 text-sm mb-4">
               <span className="text-slate-600">
                 총 요청{" "}
                 <strong className="text-slate-900">{stats.total_count}</strong>
@@ -170,6 +171,37 @@ export function Usage() {
                 </span>
               )}
             </div>
+            {stats.total_count > 0 &&
+              (() => {
+                const usageCost = calcUsageCost(stats.total_count);
+                const hasNegotiation =
+                  stats.total_count >= 250_001 || usageCost < 0;
+                return (
+                  <div className="pt-4 border-t border-slate-100">
+                    <p className="text-sm text-slate-600">
+                      이 기간 사용량 기준 예상 API 사용료:{" "}
+                      {hasNegotiation ? (
+                        <span className="text-amber-600 font-medium">
+                          250,001건 이상으로 협의 필요
+                        </span>
+                      ) : (
+                        <strong className="text-indigo-600">
+                          {formatWon(usageCost)}
+                        </strong>
+                      )}
+                      <span className="text-slate-400 ml-1.5 text-xs">
+                        (참고 · 실제 청구는 당월 누적 기준)
+                      </span>
+                    </p>
+                    <Link
+                      to="/billing"
+                      className="inline-block mt-2 text-xs text-indigo-600 hover:text-indigo-700 font-medium"
+                    >
+                      당월 예상 부과 금액 보기 →
+                    </Link>
+                  </div>
+                );
+              })()}
           </div>
 
           {/* 일별 사용량 */}
