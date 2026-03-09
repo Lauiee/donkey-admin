@@ -1,9 +1,15 @@
+import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import { Outlet, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { refreshSession } from "../api";
 import { clearToken, getToken, setToken, getTokenExpiresAtMs } from "../auth";
 
-const navItems = [
+const navItems: {
+  to: string;
+  label: string;
+  icon: ReactNode;
+  disabled?: boolean;
+}[] = [
   {
     to: "/dashboard",
     label: "대시보드",
@@ -80,6 +86,26 @@ const navItems = [
       </svg>
     ),
   },
+  {
+    to: "/turing",
+    label: "튜링",
+    disabled: true,
+    icon: (
+      <svg
+        className="w-5 h-5 shrink-0"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M22 12h-4l-3 9L9 3l-3 9H2"
+        />
+      </svg>
+    ),
+  },
 ];
 
 function formatRemaining(ms: number): string {
@@ -151,22 +177,32 @@ export function AdminLayout() {
           </span>
         </div>
         <nav className="p-3 flex flex-col gap-0.5 flex-1">
-          {navItems.map(({ to, label, icon }) => (
-            <NavLink
-              key={to}
-              to={`${to}${search}`}
-              className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                  isActive
-                    ? "bg-indigo-50 text-indigo-700 border border-indigo-100"
-                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
-                }`
-              }
-            >
-              {icon}
-              {label}
-            </NavLink>
-          ))}
+          {navItems.map(({ to, label, icon, disabled }) =>
+            disabled ? (
+              <span
+                key={to}
+                className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 cursor-not-allowed opacity-75"
+              >
+                {icon}
+                {label}
+              </span>
+            ) : (
+              <NavLink
+                key={to}
+                to={`${to}${search}`}
+                className={({ isActive }) =>
+                  `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                    isActive
+                      ? "bg-indigo-50 text-indigo-700 border border-indigo-100"
+                      : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                  }`
+                }
+              >
+                {icon}
+                {label}
+              </NavLink>
+            )
+          )}
         </nav>
         <div className="p-3 border-t border-slate-100 space-y-1">
           {remaining && (
