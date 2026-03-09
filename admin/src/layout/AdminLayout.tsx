@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Outlet, NavLink, useNavigate } from "react-router-dom";
+import { Outlet, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { refreshSession } from "../api";
 import { clearToken, getToken, setToken, getTokenExpiresAtMs } from "../auth";
 
@@ -76,6 +76,8 @@ function formatRemaining(ms: number): string {
 
 export function AdminLayout() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const search = location.search || "";
   const [remaining, setRemaining] = useState<string>("");
   const [extending, setExtending] = useState(false);
 
@@ -133,7 +135,7 @@ export function AdminLayout() {
           {navItems.map(({ to, label, icon }) => (
             <NavLink
               key={to}
-              to={to}
+              to={`${to}${search}`}
               className={({ isActive }) =>
                 `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                   isActive

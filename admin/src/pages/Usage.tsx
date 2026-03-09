@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
-import { getUsage, type UsageStats } from "../api";
+import { useSearchParams } from "react-router-dom";
+import { getProjects, getUsage, type UsageStats } from "../api";
 
 function formatDateForInput(d: Date): string {
   const y = d.getFullYear();
@@ -18,28 +19,53 @@ function defaultTo(): string {
 }
 
 export function Usage() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const projectFromUrl = searchParams.get("project_id") ?? "";
   const [from, setFrom] = useState(defaultFrom);
   const [to, setTo] = useState(defaultTo);
   const [stats, setStats] = useState<UsageStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [projects, setProjects] = useState<string[]>([]);
+  const [selectedProject, setSelectedProject] = useState(projectFromUrl);
 
-  const fetchUsage = useCallback((fromDate: string, toDate: string) => {
-    setLoading(true);
-    setError(null);
-    getUsage(fromDate, toDate)
-      .then(setStats)
-      .catch((e) => setError(e instanceof Error ? e.message : "조회 실패"))
-      .finally(() => setLoading(false));
+  useEffect(() => {
+    getProjects()
+      .then((res) => setProjects(res.items ?? []))
+      .catch(() => setProjects([]));
   }, []);
 
-  // 최초 1회: 기본 기간(최근 7일)으로 조회
   useEffect(() => {
-    fetchUsage(from, to);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps -- 마운트 시 1회만
+    setSelectedProject(projectFromUrl);
+  }, [projectFromUrl]);
+
+  const handleProjectChange = (value: string) => {
+    setSelectedProject(value);
+    const next = new URLSearchParams(searchParams);
+    if (value) next.set("project_id", value);
+    else next.delete("project_id");
+    setSearchParams(next, { replace: true });
+  };
+
+  const fetchUsage = useCallback(
+    (fromDate: string, toDate: string, project?: string) => {
+      setLoading(true);
+      setError(null);
+      getUsage(fromDate, toDate, project)
+        .then(setStats)
+        .catch((e) => setError(e instanceof Error ? e.message : "조회 실패"))
+        .finally(() => setLoading(false));
+    },
+    []
+  );
+
+  // 최초 마운트 및 프로젝트 변경 시 조회
+  useEffect(() => {
+    fetchUsage(from, to, selectedProject || undefined);
+  }, [selectedProject]); // eslint-disable-line react-hooks/exhaustive-deps -- from, to는 handleQuery로
 
   const handleQuery = () => {
-    if (from && to) fetchUsage(from, to);
+    if (from && to) fetchUsage(from, to, selectedProject || undefined);
   };
 
   const dailyCounts = stats?.daily_counts ?? [];
@@ -55,6 +81,25 @@ export function Usage() {
       <div className="admin-card p-5 mb-8">
         <h3 className="font-medium text-slate-800 mb-3">기간 조회</h3>
         <div className="flex flex-wrap items-end gap-4">
+          {projects.length > 0 && (
+            <div>
+              <label className="block text-xs font-medium text-slate-500 mb-1">
+                프로젝트
+              </label>
+              <select
+                value={selectedProject}
+                onChange={(e) => handleProjectChange(e.target.value)}
+                className="px-3 py-2 rounded-lg border border-slate-200 text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              >
+                <option value="">전체</option>
+                {projects.map((p) => (
+                  <option key={p} value={p}>
+                    {p}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
           <div>
             <label className="block text-xs font-medium text-slate-500 mb-1">
               시작일

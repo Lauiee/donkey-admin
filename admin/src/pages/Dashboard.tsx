@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import {
   getDashboard,
   getErrors,
   getHealthCheck,
+  getProjects,
   type DashboardStats,
   type ErrorItem,
   type HealthStatus,
@@ -36,6 +37,23 @@ export function Dashboard() {
   const [errorModalLoading, setErrorModalLoading] = useState(false);
   const [health, setHealth] = useState<HealthStatus | null>(null);
   const [healthRefreshing, setHealthRefreshing] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const projectFromUrl = searchParams.get("project_id") ?? "";
+  const [projects, setProjects] = useState<string[]>([]);
+  const [selectedProject, setSelectedProject] =
+    useState<string>(projectFromUrl);
+
+  useEffect(() => {
+    setSelectedProject(projectFromUrl);
+  }, [projectFromUrl]);
+
+  const handleProjectChange = (value: string) => {
+    setSelectedProject(value);
+    const next = new URLSearchParams(searchParams);
+    if (value) next.set("project_id", value);
+    else next.delete("project_id");
+    setSearchParams(next, { replace: true });
+  };
 
   const refreshHealth = () => {
     setHealthRefreshing(true);
@@ -48,9 +66,25 @@ export function Dashboard() {
       .finally(() => setHealthRefreshing(false));
   };
 
+  // 프로젝트 목록 조회 (실패 시 빈 배열로 fallback)
   useEffect(() => {
     let cancelled = false;
-    getDashboard()
+    getProjects()
+      .then((res) => {
+        if (!cancelled) setProjects(res.items ?? []);
+      })
+      .catch(() => {
+        if (!cancelled) setProjects([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    getDashboard(selectedProject || undefined)
       .then((data) => {
         if (!cancelled) setStats(data);
       })
@@ -63,7 +97,7 @@ export function Dashboard() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [selectedProject]);
 
   useEffect(() => {
     let cancelled = false;
@@ -187,10 +221,37 @@ export function Dashboard() {
 
   return (
     <div>
-      <h2 className="admin-page-title mb-2">대시보드</h2>
-      <p className="text-sm text-slate-500 mb-6">
-        API 사용 현황을 한눈에 확인하세요.
-      </p>
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+        <div>
+          <h2 className="admin-page-title mb-2">대시보드</h2>
+          <p className="text-sm text-slate-500">
+            API 사용 현황을 한눈에 확인하세요.
+          </p>
+        </div>
+        {projects.length > 0 && (
+          <div className="flex items-center gap-2">
+            <label
+              htmlFor="project-select"
+              className="text-sm font-medium text-slate-600"
+            >
+              프로젝트
+            </label>
+            <select
+              id="project-select"
+              value={selectedProject}
+              onChange={(e) => handleProjectChange(e.target.value)}
+              className="px-3 py-2 rounded-lg border border-slate-200 text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+            >
+              <option value="">전체</option>
+              {projects.map((p) => (
+                <option key={p} value={p}>
+                  {p}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+      </div>
 
       {/* 요약 카드 */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
@@ -333,7 +394,7 @@ export function Dashboard() {
             setErrorModalOpen(true);
             setErrorModalLoading(true);
             setErrorItems(null);
-            getErrors(errorPeriod)
+            getErrors(errorPeriod, selectedProject || undefined)
               .then((res) => setErrorItems(res.items))
               .catch(() => setErrorItems([]))
               .finally(() => setErrorModalLoading(false));

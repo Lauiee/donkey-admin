@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { getRequestsList, type RequestItem } from "../api";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { getProjects, getRequestsList, type RequestItem } from "../api";
 
 const PAGE_SIZE = 20;
 
@@ -40,6 +40,8 @@ function statusColor(s: string) {
 
 export function History() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const projectFromUrl = searchParams.get("project_id") ?? "";
   const [items, setItems] = useState<RequestItem[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -48,6 +50,27 @@ export function History() {
   const [searchTitle, setSearchTitle] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [projects, setProjects] = useState<string[]>([]);
+  const [selectedProject, setSelectedProject] = useState(projectFromUrl);
+
+  useEffect(() => {
+    getProjects()
+      .then((res) => setProjects(res.items ?? []))
+      .catch(() => setProjects([]));
+  }, []);
+
+  useEffect(() => {
+    setSelectedProject(projectFromUrl);
+  }, [projectFromUrl]);
+
+  const handleProjectChange = (value: string) => {
+    setSelectedProject(value);
+    setPage(1);
+    const next = new URLSearchParams(searchParams);
+    if (value) next.set("project_id", value);
+    else next.delete("project_id");
+    setSearchParams(next, { replace: true });
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -57,7 +80,8 @@ export function History() {
       page,
       PAGE_SIZE,
       searchTitle || undefined,
-      statusFilter || undefined
+      statusFilter || undefined,
+      selectedProject || undefined
     )
       .then(({ items: list, total: t }) => {
         if (!cancelled) {
@@ -75,7 +99,7 @@ export function History() {
     return () => {
       cancelled = true;
     };
-  }, [page, searchTitle, statusFilter]);
+  }, [page, searchTitle, statusFilter, selectedProject]);
 
   const handleSearch = () => {
     setSearchTitle(searchInput.trim());
@@ -93,6 +117,20 @@ export function History() {
 
       <div className="admin-card p-4 mb-6">
         <div className="flex flex-wrap items-center gap-3">
+          {projects.length > 0 && (
+            <select
+              value={selectedProject}
+              onChange={(e) => handleProjectChange(e.target.value)}
+              className="px-3 py-2 rounded-lg border border-slate-200 text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+            >
+              <option value="">전체 프로젝트</option>
+              {projects.map((p) => (
+                <option key={p} value={p}>
+                  {p}
+                </option>
+              ))}
+            </select>
+          )}
           <div className="flex rounded-lg overflow-hidden border border-slate-200">
             {(
               [

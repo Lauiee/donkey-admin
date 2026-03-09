@@ -44,6 +44,23 @@ export async function login(
   return res.json();
 }
 
+export async function getProjects(): Promise<{ items: string[] }> {
+  const res = await fetch(`${API_BASE}/admin/api/projects`, {
+    headers: getHeaders(),
+  });
+  if (!res.ok) {
+    const body = (await res.json().catch(() => ({}))) as {
+      detail?: string | { message?: string };
+    };
+    const msg =
+      (typeof body?.detail === "string"
+        ? body.detail
+        : body?.detail?.message) || `프로젝트 목록 조회 실패 (${res.status})`;
+    throw new Error(msg);
+  }
+  return res.json();
+}
+
 export async function getMe(): Promise<{
   user_id: string;
   display_name: string | null;
@@ -93,9 +110,11 @@ export interface UsageStats {
 
 export async function getUsage(
   fromDate: string,
-  toDate: string
+  toDate: string,
+  project?: string
 ): Promise<UsageStats> {
   const params = new URLSearchParams({ from_date: fromDate, to_date: toDate });
+  if (project?.trim()) params.set("project_id", project.trim());
   const res = await fetch(`${API_BASE}/admin/api/usage?${params}`, {
     headers: getHeaders(),
   });
@@ -187,7 +206,8 @@ export async function getRequestsList(
   page = 1,
   limit = 50,
   title?: string,
-  status?: string
+  status?: string,
+  project?: string
 ): Promise<{ items: RequestItem[]; total: number }> {
   const params = new URLSearchParams({
     page: String(page),
@@ -195,6 +215,7 @@ export async function getRequestsList(
   });
   if (title?.trim()) params.set("title", title.trim());
   if (status?.trim()) params.set("status", status.trim());
+  if (project?.trim()) params.set("project_id", project.trim());
   const res = await fetch(`${API_BASE}/admin/api/requests?${params}`, {
     headers: getHeaders(),
   });
@@ -224,12 +245,14 @@ export interface ErrorItem {
 }
 
 export async function getErrors(
-  period: "week" | "month" | "year"
+  period: "week" | "month" | "year",
+  project?: string
 ): Promise<{ items: ErrorItem[] }> {
-  const res = await fetch(
-    `${API_BASE}/admin/api/errors?period=${encodeURIComponent(period)}`,
-    { headers: getHeaders() }
-  );
+  const params = new URLSearchParams({ period });
+  if (project?.trim()) params.set("project_id", project.trim());
+  const res = await fetch(`${API_BASE}/admin/api/errors?${params}`, {
+    headers: getHeaders(),
+  });
   if (!res.ok) {
     const body = (await res.json().catch(() => ({}))) as {
       detail?: string | { message?: string };
@@ -280,8 +303,11 @@ export async function getHealthCheck(): Promise<HealthStatus> {
   }
 }
 
-export async function getDashboard(): Promise<DashboardStats> {
-  const res = await fetch(`${API_BASE}/admin/api/dashboard`, {
+export async function getDashboard(project?: string): Promise<DashboardStats> {
+  const params = project?.trim()
+    ? `?project_id=${encodeURIComponent(project.trim())}`
+    : "";
+  const res = await fetch(`${API_BASE}/admin/api/dashboard${params}`, {
     headers: getHeaders(),
   });
   if (!res.ok) {
