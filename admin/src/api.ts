@@ -349,7 +349,6 @@ export interface InquiryDetail {
   updated_at: string | null;
   author: string | null;
   author_email: string | null;
-  project_name?: string | null;
   replies: {
     id: string;
     body: string;
@@ -394,7 +393,8 @@ export async function getInquiriesList(
   page = 1,
   limit = 20,
   status?: string,
-  q?: string
+  q?: string,
+  projectId?: string
 ): Promise<{ items: InquiryItem[]; total: number }> {
   const params = new URLSearchParams({
     page: String(page),
@@ -402,6 +402,7 @@ export async function getInquiriesList(
   });
   if (status?.trim()) params.set("status", status.trim());
   if (q?.trim()) params.set("q", q.trim());
+  if (projectId?.trim()) params.set("project_id", projectId.trim());
   const res = await fetch(`${API_BASE}/admin/api/inquiries?${params}`, {
     headers: getHeaders(),
   });
