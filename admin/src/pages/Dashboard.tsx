@@ -258,7 +258,7 @@ export function Dashboard() {
       </div>
 
       {/* 요약 카드 */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
         <div
           className={`admin-card overflow-hidden flex flex-col items-center justify-center relative min-h-[100px] border-l-4 ${
             health?.ok
