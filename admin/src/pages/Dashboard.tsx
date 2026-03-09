@@ -8,6 +8,7 @@ import {
   type DashboardStats,
   type ErrorItem,
   type HealthStatus,
+  type ProjectItem,
   type RatePeriod,
 } from "../api";
 
@@ -39,7 +40,7 @@ export function Dashboard() {
   const [healthRefreshing, setHealthRefreshing] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const projectFromUrl = searchParams.get("project_id") ?? "";
-  const [projects, setProjects] = useState<string[]>([]);
+  const [projects, setProjects] = useState<ProjectItem[]>([]);
   const [selectedProject, setSelectedProject] =
     useState<string>(projectFromUrl);
 
@@ -244,8 +245,8 @@ export function Dashboard() {
             >
               <option value="">전체</option>
               {projects.map((p) => (
-                <option key={p} value={p}>
-                  {p}
+                <option key={p.id} value={p.id}>
+                  {p.name}
                 </option>
               ))}
             </select>

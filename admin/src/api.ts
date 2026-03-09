@@ -44,7 +44,12 @@ export async function login(
   return res.json();
 }
 
-export async function getProjects(): Promise<{ items: string[] }> {
+export interface ProjectItem {
+  id: string;
+  name: string;
+}
+
+export async function getProjects(): Promise<{ items: ProjectItem[] }> {
   const res = await fetch(`${API_BASE}/admin/api/projects`, {
     headers: getHeaders(),
   });

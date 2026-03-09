@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { getProjects, getRequestsList, type RequestItem } from "../api";
+import { getProjects, getRequestsList, type ProjectItem, type RequestItem } from "../api";
 
 const PAGE_SIZE = 20;
 
@@ -50,7 +50,7 @@ export function History() {
   const [searchTitle, setSearchTitle] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [projects, setProjects] = useState<string[]>([]);
+  const [projects, setProjects] = useState<ProjectItem[]>([]);
   const [selectedProject, setSelectedProject] = useState(projectFromUrl);
 
   useEffect(() => {
@@ -125,8 +125,8 @@ export function History() {
             >
               <option value="">전체 프로젝트</option>
               {projects.map((p) => (
-                <option key={p} value={p}>
-                  {p}
+                <option key={p.id} value={p.id}>
+                  {p.name}
                 </option>
               ))}
             </select>

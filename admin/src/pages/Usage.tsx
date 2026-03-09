@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { getProjects, getUsage, type UsageStats } from "../api";
+import { getProjects, getUsage, type ProjectItem, type UsageStats } from "../api";
 
 function formatDateForInput(d: Date): string {
   const y = d.getFullYear();
@@ -26,7 +26,7 @@ export function Usage() {
   const [stats, setStats] = useState<UsageStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [projects, setProjects] = useState<string[]>([]);
+  const [projects, setProjects] = useState<ProjectItem[]>([]);
   const [selectedProject, setSelectedProject] = useState(projectFromUrl);
 
   useEffect(() => {
@@ -93,8 +93,8 @@ export function Usage() {
               >
                 <option value="">전체</option>
                 {projects.map((p) => (
-                  <option key={p} value={p}>
-                    {p}
+                  <option key={p.id} value={p.id}>
+                    {p.name}
                   </option>
                 ))}
               </select>
