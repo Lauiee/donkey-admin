@@ -1,8 +1,8 @@
 Donkey Admin 백엔드 API 수정 요청해.
 
 1. 새 API 추가: GET /admin/api/projects
-   - Response: { "items": ["project-id-1", "project-id-2"] }
-   - DB 요청 테이블에서 고유 project_id 목록 조회해서 반환
+   - Response: { "items": [{ "id": "project-id-1", "name": "프로젝트 A" }, ...] }
+   - id: project_id (필터용), name: 프로젝트명 (UI 표시용)
 
 2. 기존 4개 API에 project_id 쿼리 파라미터(optional) 추가해서 필터링:
    - GET /admin/api/dashboard?project_id=xxx

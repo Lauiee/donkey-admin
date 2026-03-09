@@ -8,18 +8,22 @@
 
 ### `GET /admin/api/projects`
 
-프로젝트 필터용 `project_id` 목록을 반환합니다.
+프로젝트 필터용 목록을 반환합니다. UI에는 프로젝트명을 표시하고, API 필터에는 id(project_id)를 사용합니다.
 
 **Response 200**
 
 ```json
 {
-  "items": ["project-id-1", "project-id-2"]
+  "items": [
+    { "id": "project-id-1", "name": "프로젝트 A" },
+    { "id": "project-id-2", "name": "프로젝트 B" }
+  ]
 }
 ```
 
-- DB의 요청(requests) 테이블에서 고유한 `project_id` 값을 조회
-- 정렬은 자유 (예: 알파벳순, 생성일순 등)
+- `id`: project_id (API 필터용)
+- `name`: 프로젝트명 (UI 표시용)
+- DB의 요청(requests) 테이블 또는 프로젝트 마스터 테이블에서 조회
 
 ---
 

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
+import { ProjectSelect } from "../components/ProjectSelect";
 import {
   getDashboard,
   getErrors,
@@ -230,27 +231,13 @@ export function Dashboard() {
           </p>
         </div>
         {projects.length > 0 && (
-          <div className="flex items-center gap-2">
-            <label
-              htmlFor="project-select"
-              className="text-sm font-medium text-slate-600"
-            >
-              프로젝트
-            </label>
-            <select
-              id="project-select"
-              value={selectedProject}
-              onChange={(e) => handleProjectChange(e.target.value)}
-              className="px-3 py-2 rounded-lg border border-slate-200 text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-            >
-              <option value="">전체</option>
-              {projects.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                </option>
-              ))}
-            </select>
-          </div>
+          <ProjectSelect
+            value={selectedProject}
+            onChange={handleProjectChange}
+            projects={projects}
+            placeholder="전체"
+            className="shrink-0"
+          />
         )}
       </div>
 

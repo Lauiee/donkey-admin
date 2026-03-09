@@ -1,6 +1,12 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { getProjects, getRequestsList, type ProjectItem, type RequestItem } from "../api";
+import { ProjectSelect } from "../components/ProjectSelect";
+import {
+  getProjects,
+  getRequestsList,
+  type ProjectItem,
+  type RequestItem,
+} from "../api";
 
 const PAGE_SIZE = 20;
 
@@ -118,18 +124,12 @@ export function History() {
       <div className="admin-card p-4 mb-6">
         <div className="flex flex-wrap items-center gap-3">
           {projects.length > 0 && (
-            <select
+            <ProjectSelect
               value={selectedProject}
-              onChange={(e) => handleProjectChange(e.target.value)}
-              className="px-3 py-2 rounded-lg border border-slate-200 text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-            >
-              <option value="">전체 프로젝트</option>
-              {projects.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                </option>
-              ))}
-            </select>
+              onChange={handleProjectChange}
+              projects={projects}
+              placeholder="전체 프로젝트"
+            />
           )}
           <div className="flex rounded-lg overflow-hidden border border-slate-200">
             {(

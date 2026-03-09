@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { getProjects, getUsage, type ProjectItem, type UsageStats } from "../api";
+import { ProjectSelect } from "../components/ProjectSelect";
+import {
+  getProjects,
+  getUsage,
+  type ProjectItem,
+  type UsageStats,
+} from "../api";
 
 function formatDateForInput(d: Date): string {
   const y = d.getFullYear();
@@ -82,22 +88,16 @@ export function Usage() {
         <h3 className="font-medium text-slate-800 mb-3">기간 조회</h3>
         <div className="flex flex-wrap items-end gap-4">
           {projects.length > 0 && (
-            <div>
-              <label className="block text-xs font-medium text-slate-500 mb-1">
+            <div className="flex flex-col">
+              <label className="block text-xs font-medium text-slate-500 mb-1.5">
                 프로젝트
               </label>
-              <select
+              <ProjectSelect
                 value={selectedProject}
-                onChange={(e) => handleProjectChange(e.target.value)}
-                className="px-3 py-2 rounded-lg border border-slate-200 text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-              >
-                <option value="">전체</option>
-                {projects.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                  </option>
-                ))}
-              </select>
+                onChange={handleProjectChange}
+                projects={projects}
+                placeholder="전체"
+              />
             </div>
           )}
           <div>
