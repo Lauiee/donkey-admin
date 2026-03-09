@@ -328,6 +328,170 @@ export async function getDashboard(project?: string): Promise<DashboardStats> {
   return res.json();
 }
 
+export interface InquiryItem {
+  id: string;
+  title: string;
+  status: string;
+  project_id?: string | null;
+  created_at: string;
+  updated_at: string | null;
+  author: string | null;
+}
+
+export interface InquiryDetail {
+  id: string;
+  title: string;
+  body: string;
+  status: string;
+  project_id?: string | null;
+  project_name?: string | null;
+  created_at: string;
+  updated_at: string | null;
+  author: string | null;
+  author_email: string | null;
+  project_name?: string | null;
+  replies: {
+    id: string;
+    body: string;
+    created_at: string;
+    author: string | null;
+  }[];
+}
+
+export async function createInquiry(
+  title: string,
+  body: string,
+  projectId?: string
+): Promise<{
+  id: string;
+  title: string;
+  body: string;
+  status: string;
+  created_at: string;
+  author: string | null;
+}> {
+  const body_: Record<string, string> = { title, body };
+  if (projectId?.trim()) body_.project_id = projectId.trim();
+  const res = await fetch(`${API_BASE}/admin/api/inquiries`, {
+    method: "POST",
+    headers: getHeaders(),
+    body: JSON.stringify(body_),
+  });
+  if (!res.ok) {
+    const resBody = (await res.json().catch(() => ({}))) as {
+      detail?: string | { message?: string };
+    };
+    const msg =
+      (typeof resBody?.detail === "string"
+        ? resBody.detail
+        : resBody?.detail?.message) || `문의 등록 실패 (${res.status})`;
+    throw new Error(msg);
+  }
+  return res.json();
+}
+
+export async function getInquiriesList(
+  page = 1,
+  limit = 20,
+  status?: string,
+  q?: string
+): Promise<{ items: InquiryItem[]; total: number }> {
+  const params = new URLSearchParams({
+    page: String(page),
+    limit: String(limit),
+  });
+  if (status?.trim()) params.set("status", status.trim());
+  if (q?.trim()) params.set("q", q.trim());
+  const res = await fetch(`${API_BASE}/admin/api/inquiries?${params}`, {
+    headers: getHeaders(),
+  });
+  if (!res.ok) {
+    const body = (await res.json().catch(() => ({}))) as {
+      detail?: string | { message?: string };
+    };
+    const msg =
+      (typeof body?.detail === "string"
+        ? body.detail
+        : body?.detail?.message) || `문의 목록 조회 실패 (${res.status})`;
+    throw new Error(msg);
+  }
+  return res.json();
+}
+
+export async function getInquiryDetail(id: string): Promise<InquiryDetail> {
+  const res = await fetch(
+    `${API_BASE}/admin/api/inquiries/${encodeURIComponent(id)}`,
+    { headers: getHeaders() }
+  );
+  if (!res.ok) {
+    if (res.status === 404) throw new Error("해당 문의를 찾을 수 없습니다.");
+    const body = (await res.json().catch(() => ({}))) as {
+      detail?: string | { message?: string };
+    };
+    const msg =
+      (typeof body?.detail === "string"
+        ? body.detail
+        : body?.detail?.message) || `문의 상세 조회 실패 (${res.status})`;
+    throw new Error(msg);
+  }
+  return res.json();
+}
+
+export async function updateInquiryStatus(
+  id: string,
+  status: string
+): Promise<{ id: string; status: string; updated_at: string }> {
+  const res = await fetch(
+    `${API_BASE}/admin/api/inquiries/${encodeURIComponent(id)}`,
+    {
+      method: "PATCH",
+      headers: getHeaders(),
+      body: JSON.stringify({ status }),
+    }
+  );
+  if (!res.ok) {
+    const body = (await res.json().catch(() => ({}))) as {
+      detail?: string | { message?: string };
+    };
+    const msg =
+      (typeof body?.detail === "string"
+        ? body.detail
+        : body?.detail?.message) || `상태 변경 실패 (${res.status})`;
+    throw new Error(msg);
+  }
+  return res.json();
+}
+
+export async function createInquiryReply(
+  id: string,
+  body: string
+): Promise<{
+  id: string;
+  body: string;
+  created_at: string;
+  author: string | null;
+}> {
+  const res = await fetch(
+    `${API_BASE}/admin/api/inquiries/${encodeURIComponent(id)}/replies`,
+    {
+      method: "POST",
+      headers: getHeaders(),
+      body: JSON.stringify({ body }),
+    }
+  );
+  if (!res.ok) {
+    const resBody = (await res.json().catch(() => ({}))) as {
+      detail?: string | { message?: string };
+    };
+    const msg =
+      (typeof resBody?.detail === "string"
+        ? resBody.detail
+        : resBody?.detail?.message) || `답변 등록 실패 (${res.status})`;
+    throw new Error(msg);
+  }
+  return res.json();
+}
+
 /** 세션 연장: 새 토큰(4시간) 발급 후 저장용 반환 */
 export async function refreshSession(): Promise<{ access_token: string }> {
   const res = await fetch(`${API_BASE}/admin/api/refresh`, {

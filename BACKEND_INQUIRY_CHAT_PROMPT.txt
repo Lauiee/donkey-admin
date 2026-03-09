@@ -1,0 +1,23 @@
+Donkey Admin 문의(CS) API 구현 요청해.
+
+1. 문의 등록: POST /admin/api/inquiries
+   - Body: { "title", "body", "project_id" }  (project_id 선택)
+   - Response 201: { "id", "title", "body", "status": "pending", "project_id", "created_at", "author" }
+   - author는 로그인한 사용자(admin/api/me)에서 매핑
+
+2. 문의 목록: GET /admin/api/inquiries
+   - Query: page, limit, status(pending|in_progress|completed), project_id, q(검색어)
+   - Response: { "items": [{ "id", "title", "status", "project_id", "created_at", "updated_at", "author" }], "total" }
+
+3. 문의 상세: GET /admin/api/inquiries/{id}
+   - Response: { "id", "title", "body", "status", "project_id", "project_name", "created_at", "updated_at", "author", "author_email", "replies": [...] }
+
+4. 문의 상태 변경: PATCH /admin/api/inquiries/{id}
+   - Body: { "status": "pending" | "in_progress" | "completed" }
+   - Response: { "id", "status", "updated_at" }
+
+5. 문의 답변 등록: POST /admin/api/inquiries/{id}/replies
+   - Body: { "body": "string" }
+   - Response: { "id", "body", "created_at", "author" }
+
+상세 명세는 API_SPEC.md 2.8~2.12 절 참고.

@@ -5,6 +5,8 @@ import { Billing } from "./pages/Billing";
 import { Dashboard } from "./pages/Dashboard";
 import { History } from "./pages/History";
 import { HistoryDetail } from "./pages/HistoryDetail";
+import { Inquiry } from "./pages/Inquiry";
+import { InquiryDetail } from "./pages/InquiryDetail";
 import { Login } from "./pages/Login";
 import { Usage } from "./pages/Usage";
 
@@ -20,6 +22,8 @@ function App() {
           <Route path="billing" element={<Billing />} />
           <Route path="history" element={<History />} />
           <Route path="history/:jobId" element={<HistoryDetail />} />
+          <Route path="inquiry" element={<Inquiry />} />
+          <Route path="inquiry/:id" element={<InquiryDetail />} />
         </Route>
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
