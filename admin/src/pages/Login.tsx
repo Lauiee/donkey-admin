@@ -21,8 +21,9 @@ export function Login() {
     } catch (err) {
       let msg = err instanceof Error ? err.message : "로그인에 실패했습니다.";
       if (msg.includes("Failed to fetch") || msg.includes("NetworkError")) {
-        msg =
-          "API 서버에 연결할 수 없습니다. 백엔드가 localhost:8000에서 실행 중인지 확인해 주세요.";
+        msg = import.meta.env.DEV
+          ? "API 서버에 연결할 수 없습니다. 백엔드가 localhost:8000에서 실행 중인지 확인해 주세요."
+          : "API 서버에 연결할 수 없습니다. 잠시 후 다시 시도해 주세요.";
       }
       setError(msg);
     } finally {
