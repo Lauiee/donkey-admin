@@ -5,6 +5,7 @@ import {
   createInquiry,
   getInquiriesList,
   getProjects,
+  uploadInquiryAttachment,
   type InquiryItem,
   type ProjectItem,
 } from "../api";
@@ -68,6 +69,11 @@ export function Inquiry() {
   const [createTitle, setCreateTitle] = useState("");
   const [createBody, setCreateBody] = useState("");
   const [createProjectId, setCreateProjectId] = useState("");
+  const [createAttachmentUrls, setCreateAttachmentUrls] = useState<string[]>(
+    []
+  );
+  const [createFiles, setCreateFiles] = useState<File[]>([]);
+  const [createUploading, setCreateUploading] = useState(false);
   const [createSubmitting, setCreateSubmitting] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
   const [projects, setProjects] = useState<ProjectItem[]>([]);
@@ -143,14 +149,26 @@ export function Inquiry() {
     setCreateSubmitting(true);
     setCreateError(null);
     try {
+      let attachmentUrls = [...createAttachmentUrls];
+      if (createFiles.length > 0) {
+        setCreateUploading(true);
+        for (const file of createFiles) {
+          const { url } = await uploadInquiryAttachment(file);
+          attachmentUrls = [...attachmentUrls, url];
+        }
+        setCreateUploading(false);
+      }
       const created = await createInquiry(
         createTitle.trim(),
         createBody.trim(),
-        createProjectId || undefined
+        createProjectId || undefined,
+        attachmentUrls
       );
       setCreateModalOpen(false);
       setCreateTitle("");
       setCreateBody("");
+      setCreateAttachmentUrls([]);
+      setCreateFiles([]);
       setPage(1);
       getInquiriesList(
         1,
@@ -199,6 +217,8 @@ export function Inquiry() {
             setCreateTitle("");
             setCreateBody("");
             setCreateProjectId(selectedProject);
+            setCreateAttachmentUrls([]);
+            setCreateFiles([]);
           }}
           className="px-4 py-2 rounded-lg text-sm font-medium bg-indigo-600 text-white hover:bg-indigo-700 shrink-0"
         >
@@ -256,6 +276,42 @@ export function Inquiry() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-600 mb-1.5">
+                  첨부파일
+                </label>
+                <input
+                  type="file"
+                  multiple
+                  onChange={(e) => {
+                    const files = e.target.files;
+                    if (files)
+                      setCreateFiles((prev) => [...prev, ...Array.from(files)]);
+                    e.target.value = "";
+                  }}
+                  className="block w-full text-sm text-slate-600 file:mr-4 file:py-2 file:px-3 file:rounded-lg file:border file:border-slate-200 file:text-sm file:font-medium file:bg-slate-50 file:text-slate-700 hover:file:bg-slate-100"
+                />
+                {createFiles.length > 0 && (
+                  <ul className="mt-2 space-y-1 text-sm text-slate-600">
+                    {createFiles.map((f, i) => (
+                      <li key={i} className="flex items-center gap-2">
+                        <span>{f.name}</span>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setCreateFiles((prev) =>
+                              prev.filter((_, j) => j !== i)
+                            )
+                          }
+                          className="text-red-500 hover:text-red-600 text-xs"
+                        >
+                          삭제
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-600 mb-1.5">
                   내용
                 </label>
                 <textarea
@@ -280,11 +336,18 @@ export function Inquiry() {
                 type="button"
                 onClick={handleCreate}
                 disabled={
-                  createSubmitting || !createTitle.trim() || !createBody.trim()
+                  createSubmitting ||
+                  createUploading ||
+                  !createTitle.trim() ||
+                  !createBody.trim()
                 }
                 className="px-4 py-2 rounded-lg text-sm font-medium bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 disabled:pointer-events-none"
               >
-                {createSubmitting ? "등록 중…" : "등록"}
+                {createUploading
+                  ? "업로드 중…"
+                  : createSubmitting
+                  ? "등록 중…"
+                  : "등록"}
               </button>
             </div>
           </div>

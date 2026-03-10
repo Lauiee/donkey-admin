@@ -1,6 +1,12 @@
 import { useEffect, useState } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
-import { deleteInquiry, getInquiryDetail, type InquiryDetail } from "../api";
+import {
+  deleteInquiry,
+  getInquiryDetail,
+  updateInquiry,
+  uploadInquiryAttachment,
+  type InquiryDetail,
+} from "../api";
 
 function statusLabel(s: string) {
   const map: Record<string, string> = {
@@ -42,6 +48,14 @@ export function InquiryDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editTitle, setEditTitle] = useState("");
+  const [editBody, setEditBody] = useState("");
+  const [editAttachmentUrls, setEditAttachmentUrls] = useState<string[]>([]);
+  const [editFiles, setEditFiles] = useState<File[]>([]);
+  const [editSubmitting, setEditSubmitting] = useState(false);
+  const [editUploading, setEditUploading] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -63,6 +77,44 @@ export function InquiryDetail() {
       cancelled = true;
     };
   }, [id]);
+
+  const openEditModal = () => {
+    setEditTitle(detail?.title ?? "");
+    setEditBody(detail?.body ?? "");
+    setEditAttachmentUrls(detail?.attachment_urls ?? []);
+    setEditFiles([]);
+    setEditError(null);
+    setEditModalOpen(true);
+  };
+
+  const handleEdit = async () => {
+    if (!id || !detail) return;
+    if (!editTitle.trim() || !editBody.trim()) return;
+    setEditSubmitting(true);
+    setEditError(null);
+    try {
+      let attachmentUrls = [...editAttachmentUrls];
+      if (editFiles.length > 0) {
+        setEditUploading(true);
+        for (const file of editFiles) {
+          const { url } = await uploadInquiryAttachment(file);
+          attachmentUrls = [...attachmentUrls, url];
+        }
+        setEditUploading(false);
+      }
+      const updated = await updateInquiry(id, {
+        title: editTitle.trim(),
+        body: editBody.trim(),
+        attachment_urls: attachmentUrls,
+      });
+      setDetail(updated);
+      setEditModalOpen(false);
+    } catch (e) {
+      setEditError(e instanceof Error ? e.message : "수정 실패");
+    } finally {
+      setEditSubmitting(false);
+    }
+  };
 
   const handleDelete = async () => {
     if (!id) return;
@@ -112,14 +164,23 @@ export function InquiryDetail() {
           ← 문의
         </Link>
         {detail.status === "pending" && (
-          <button
-            type="button"
-            onClick={handleDelete}
-            disabled={deleting}
-            className="px-3 py-1.5 rounded-lg text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 disabled:opacity-50"
-          >
-            {deleting ? "삭제 중…" : "문의 삭제"}
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={openEditModal}
+              className="px-3 py-1.5 rounded-lg text-sm font-medium text-slate-700 bg-slate-100 hover:bg-slate-200"
+            >
+              수정
+            </button>
+            <button
+              type="button"
+              onClick={handleDelete}
+              disabled={deleting}
+              className="px-3 py-1.5 rounded-lg text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 disabled:opacity-50"
+            >
+              {deleting ? "삭제 중…" : "문의 삭제"}
+            </button>
+          </div>
         )}
       </div>
 
@@ -148,8 +209,161 @@ export function InquiryDetail() {
           <pre className="whitespace-pre-wrap text-sm text-slate-700 font-sans">
             {detail.body || "(내용 없음)"}
           </pre>
+          {detail.attachment_urls && detail.attachment_urls.length > 0 && (
+            <div className="mt-4 pt-4 border-t border-slate-100">
+              <p className="text-xs font-medium text-slate-500 mb-2">
+                첨부파일
+              </p>
+              <ul className="space-y-1">
+                {detail.attachment_urls.map((url, i) => (
+                  <li key={i}>
+                    <a
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm text-indigo-600 hover:underline"
+                    >
+                      {url.split("/").pop() ?? url}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
       </div>
+
+      {/* 수정 모달 */}
+      {editModalOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          onClick={() => !editSubmitting && setEditModalOpen(false)}
+        >
+          <div
+            className="admin-card w-full max-w-lg max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-5 border-b border-slate-100">
+              <h3 className="font-semibold text-slate-800">문의 수정</h3>
+            </div>
+            <div className="p-5 space-y-4">
+              {editError && <p className="text-sm text-red-600">{editError}</p>}
+              <div>
+                <label className="block text-sm font-medium text-slate-600 mb-1.5">
+                  제목
+                </label>
+                <input
+                  type="text"
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-600 mb-1.5">
+                  내용
+                </label>
+                <textarea
+                  value={editBody}
+                  onChange={(e) => setEditBody(e.target.value)}
+                  rows={5}
+                  className="w-full px-4 py-2.5 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-600 mb-1.5">
+                  첨부파일
+                </label>
+                {editAttachmentUrls.length > 0 && (
+                  <ul className="mb-2 space-y-1 text-sm text-slate-600">
+                    {editAttachmentUrls.map((url, i) => (
+                      <li key={i} className="flex items-center gap-2">
+                        <a
+                          href={url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-indigo-600 hover:underline truncate"
+                        >
+                          {url.split("/").pop() ?? url}
+                        </a>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setEditAttachmentUrls((prev) =>
+                              prev.filter((_, j) => j !== i)
+                            )
+                          }
+                          className="text-red-500 hover:text-red-600 text-xs shrink-0"
+                        >
+                          삭제
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <input
+                  type="file"
+                  multiple
+                  onChange={(e) => {
+                    const files = e.target.files;
+                    if (files)
+                      setEditFiles((prev) => [...prev, ...Array.from(files)]);
+                    e.target.value = "";
+                  }}
+                  className="block w-full text-sm text-slate-600 file:mr-4 file:py-2 file:px-3 file:rounded-lg file:border file:border-slate-200 file:text-sm file:font-medium file:bg-slate-50"
+                />
+                {editFiles.length > 0 && (
+                  <ul className="mt-2 space-y-1 text-sm text-slate-600">
+                    {editFiles.map((f, i) => (
+                      <li key={i} className="flex items-center gap-2">
+                        <span>{f.name}</span>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setEditFiles((prev) =>
+                              prev.filter((_, j) => j !== i)
+                            )
+                          }
+                          className="text-red-500 hover:text-red-600 text-xs"
+                        >
+                          삭제
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
+            <div className="p-5 border-t border-slate-100 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => !editSubmitting && setEditModalOpen(false)}
+                disabled={editSubmitting}
+                className="px-4 py-2 rounded-lg text-sm font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 disabled:opacity-50"
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                onClick={handleEdit}
+                disabled={
+                  editSubmitting ||
+                  editUploading ||
+                  !editTitle.trim() ||
+                  !editBody.trim()
+                }
+                className="px-4 py-2 rounded-lg text-sm font-medium bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 disabled:pointer-events-none"
+              >
+                {editUploading
+                  ? "업로드 중…"
+                  : editSubmitting
+                  ? "저장 중…"
+                  : "저장"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 답변 목록 */}
       {detail.replies.length > 0 && (

@@ -345,6 +345,7 @@ export interface InquiryDetail {
   status: string;
   project_id?: string | null;
   project_name?: string | null;
+  attachment_urls?: string[];
   created_at: string;
   updated_at: string | null;
   author: string | null;
@@ -357,10 +358,41 @@ export interface InquiryDetail {
   }[];
 }
 
+/** 첨부파일 업로드 - 반환된 url을 attachment_urls에 담아 문의 등록/수정 시 전달 */
+export async function uploadInquiryAttachment(
+  file: File
+): Promise<{ url: string }> {
+  const formData = new FormData();
+  formData.append("file", file);
+  const token = getToken();
+  const headers: HeadersInit = {};
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+  const res = await fetch(
+    `${API_BASE}/admin/api/inquiries/attachments/upload`,
+    {
+      method: "POST",
+      headers,
+      body: formData,
+    }
+  );
+  if (!res.ok) {
+    const body = (await res.json().catch(() => ({}))) as {
+      detail?: string | { message?: string };
+    };
+    const msg =
+      (typeof body?.detail === "string"
+        ? body.detail
+        : body?.detail?.message) || `파일 업로드 실패 (${res.status})`;
+    throw new Error(msg);
+  }
+  return res.json();
+}
+
 export async function createInquiry(
   title: string,
   body: string,
-  projectId?: string
+  projectId?: string,
+  attachmentUrls?: string[]
 ): Promise<{
   id: string;
   title: string;
@@ -369,7 +401,11 @@ export async function createInquiry(
   created_at: string;
   author: string | null;
 }> {
-  const body_: Record<string, string> = { title, body };
+  const body_: Record<string, unknown> = {
+    title,
+    body,
+    attachment_urls: attachmentUrls ?? [],
+  };
   if (projectId?.trim()) body_.project_id = projectId.trim();
   const res = await fetch(`${API_BASE}/admin/api/inquiries`, {
     method: "POST",
@@ -433,6 +469,31 @@ export async function getInquiryDetail(id: string): Promise<InquiryDetail> {
       (typeof body?.detail === "string"
         ? body.detail
         : body?.detail?.message) || `문의 상세 조회 실패 (${res.status})`;
+    throw new Error(msg);
+  }
+  return res.json();
+}
+
+export async function updateInquiry(
+  id: string,
+  data: { title: string; body: string; attachment_urls: string[] }
+): Promise<InquiryDetail> {
+  const res = await fetch(
+    `${API_BASE}/admin/api/inquiries/${encodeURIComponent(id)}`,
+    {
+      method: "PATCH",
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    }
+  );
+  if (!res.ok) {
+    const body = (await res.json().catch(() => ({}))) as {
+      detail?: string | { message?: string };
+    };
+    const msg =
+      (typeof body?.detail === "string"
+        ? body.detail
+        : body?.detail?.message) || `수정 실패 (${res.status})`;
     throw new Error(msg);
   }
   return res.json();
