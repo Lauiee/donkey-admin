@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { getRole } from "../auth";
 import { ProjectSelect } from "../components/ProjectSelect";
 import {
   createInquiry,
+  getInquiriesAll,
   getInquiriesList,
   getProjects,
   uploadInquiryAttachment,
@@ -54,6 +56,7 @@ function statusColor(s: string) {
 export function Inquiry() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const isAdmin = getRole() === "admin";
   const statusFromUrl = searchParams.get("status") ?? "";
   const qFromUrl = searchParams.get("q") ?? "";
 
@@ -112,7 +115,8 @@ export function Inquiry() {
     let cancelled = false;
     setLoading(true);
     setError(null);
-    getInquiriesList(
+    const fetchList = isAdmin ? getInquiriesAll : getInquiriesList;
+    fetchList(
       page,
       PAGE_SIZE,
       statusFilter || undefined,
@@ -135,7 +139,7 @@ export function Inquiry() {
     return () => {
       cancelled = true;
     };
-  }, [page, statusFilter, searchQuery, selectedProject]);
+  }, [page, statusFilter, searchQuery, selectedProject, isAdmin]);
 
   const handleStatusChange = (value: string) => {
     setStatusFilter(value);
@@ -211,21 +215,23 @@ export function Inquiry() {
             문의를 등록하거나 이전 문의 내역을 확인하세요.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => {
-            setCreateModalOpen(true);
-            setCreateError(null);
-            setCreateTitle("");
-            setCreateBody("");
-            setCreateProjectId(selectedProject);
-            setCreateAttachmentUrls([]);
-            setCreateFiles([]);
-          }}
-          className="px-4 py-2 rounded-lg text-sm font-medium bg-indigo-600 text-white hover:bg-indigo-700 shrink-0"
-        >
-          새 문의
-        </button>
+        {!isAdmin && (
+          <button
+            type="button"
+            onClick={() => {
+              setCreateModalOpen(true);
+              setCreateError(null);
+              setCreateTitle("");
+              setCreateBody("");
+              setCreateProjectId(selectedProject);
+              setCreateAttachmentUrls([]);
+              setCreateFiles([]);
+            }}
+            className="px-4 py-2 rounded-lg text-sm font-medium bg-indigo-600 text-white hover:bg-indigo-700 shrink-0"
+          >
+            새 문의
+          </button>
+        )}
       </div>
 
       {/* 문의 등록 모달 */}

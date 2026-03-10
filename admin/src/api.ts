@@ -69,6 +69,7 @@ export async function getProjects(): Promise<{ items: ProjectItem[] }> {
 export async function getMe(): Promise<{
   user_id: string;
   display_name: string | null;
+  role?: "client" | "admin";
 }> {
   const res = await fetch(`${API_BASE}/admin/api/me`, {
     headers: getHeaders(),
@@ -450,6 +451,38 @@ export async function getInquiriesList(
       (typeof body?.detail === "string"
         ? body.detail
         : body?.detail?.message) || `문의 목록 조회 실패 (${res.status})`;
+    throw new Error(msg);
+  }
+  return res.json();
+}
+
+/** 문의 전체 조회 (role=admin 전용, 403 otherwise) */
+export async function getInquiriesAll(
+  page = 1,
+  limit = 20,
+  status?: string,
+  q?: string,
+  projectId?: string
+): Promise<{ items: InquiryItem[]; total: number }> {
+  const params = new URLSearchParams({
+    page: String(page),
+    limit: String(Math.min(limit, 500)),
+  });
+  if (status?.trim()) params.set("status", status.trim());
+  if (q?.trim()) params.set("q", q.trim());
+  if (projectId?.trim()) params.set("project_id", projectId.trim());
+  const res = await fetch(`${API_BASE}/admin/api/inquiries/all?${params}`, {
+    headers: getHeaders(),
+  });
+  if (!res.ok) {
+    if (res.status === 403) throw new Error("권한이 없습니다.");
+    const body = (await res.json().catch(() => ({}))) as {
+      detail?: string | { message?: string };
+    };
+    const msg =
+      (typeof body?.detail === "string"
+        ? body.detail
+        : body?.detail?.message) || `문의 전체 조회 실패 (${res.status})`;
     throw new Error(msg);
   }
   return res.json();

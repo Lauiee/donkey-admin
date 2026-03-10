@@ -1,9 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
+import { getRole } from "../auth";
 import {
+  createInquiryReply,
   deleteInquiry,
   getInquiryDetail,
   updateInquiry,
+  updateInquiryStatus,
   uploadInquiryAttachment,
   type InquiryDetail,
 } from "../api";
@@ -46,13 +49,22 @@ function formatDate(iso: string) {
   }
 }
 
+const STATUS_OPTIONS = [
+  { value: "pending", label: "대기중" },
+  { value: "in_progress", label: "처리 중" },
+  { value: "completed", label: "완료" },
+] as const;
+
 export function InquiryDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const isAdmin = getRole() === "admin";
   const [detail, setDetail] = useState<InquiryDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [replyBody, setReplyBody] = useState("");
+  const [replySubmitting, setReplySubmitting] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editTitle, setEditTitle] = useState("");
   const [editBody, setEditBody] = useState("");
@@ -123,6 +135,32 @@ export function InquiryDetail() {
     }
   };
 
+  const handleReply = async () => {
+    if (!id || !replyBody.trim()) return;
+    setReplySubmitting(true);
+    try {
+      const reply = await createInquiryReply(id, replyBody.trim());
+      setDetail((prev) =>
+        prev ? { ...prev, replies: [...prev.replies, reply] } : prev
+      );
+      setReplyBody("");
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "답변 등록 실패");
+    } finally {
+      setReplySubmitting(false);
+    }
+  };
+
+  const handleStatusChange = async (status: string) => {
+    if (!id) return;
+    try {
+      await updateInquiryStatus(id, status);
+      setDetail((prev) => (prev ? { ...prev, status } : prev));
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "상태 변경 실패");
+    }
+  };
+
   const handleDelete = async () => {
     if (!id) return;
     if (!window.confirm("이 문의를 삭제하시겠습니까?")) return;
@@ -170,24 +208,48 @@ export function InquiryDetail() {
         >
           ← 문의
         </Link>
-        {detail.status === "pending" && (
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={openEditModal}
-              className="px-3 py-1.5 rounded-lg text-sm font-medium text-slate-700 bg-slate-100 hover:bg-slate-200"
+        {isAdmin ? (
+          <div className="flex flex-wrap items-center gap-2">
+            <select
+              value={detail.status}
+              onChange={(e) => handleStatusChange(e.target.value)}
+              className="px-3 py-1.5 rounded-lg text-sm font-medium border border-slate-200 bg-white"
             >
-              수정
-            </button>
+              {STATUS_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
             <button
               type="button"
               onClick={handleDelete}
               disabled={deleting}
               className="px-3 py-1.5 rounded-lg text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 disabled:opacity-50"
             >
-              {deleting ? "삭제 중…" : "문의 삭제"}
+              {deleting ? "삭제 중…" : "삭제"}
             </button>
           </div>
+        ) : (
+          detail.status === "pending" && (
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={openEditModal}
+                className="px-3 py-1.5 rounded-lg text-sm font-medium text-slate-700 bg-slate-100 hover:bg-slate-200"
+              >
+                수정
+              </button>
+              <button
+                type="button"
+                onClick={handleDelete}
+                disabled={deleting}
+                className="px-3 py-1.5 rounded-lg text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 disabled:opacity-50"
+              >
+                {deleting ? "삭제 중…" : "문의 삭제"}
+              </button>
+            </div>
+          )
         )}
       </div>
 
@@ -408,23 +470,47 @@ export function InquiryDetail() {
         </div>
       )}
 
-      {/* 답변 목록 */}
-      {detail.replies.length > 0 && (
+      {/* 답변 (admin: 등록 폼 + 목록, client: 목록만) */}
+      {(isAdmin || detail.replies.length > 0) && (
         <div className="admin-card p-6 mb-6">
           <h3 className="font-semibold text-slate-800 mb-4">답변</h3>
-          <ul className="space-y-4">
-            {detail.replies.map((r) => (
-              <li key={r.id} className="pl-4 border-l-2 border-indigo-200 py-1">
-                <p className="text-sm text-slate-700 whitespace-pre-wrap">
-                  {r.body}
-                </p>
-                <p className="text-xs text-slate-500 mt-2">
-                  {r.author && `${r.author} · `}
-                  {formatDate(r.created_at)}
-                </p>
-              </li>
-            ))}
-          </ul>
+          {isAdmin && (
+            <div className="mb-6">
+              <textarea
+                value={replyBody}
+                onChange={(e) => setReplyBody(e.target.value)}
+                placeholder="답변을 입력하세요"
+                rows={3}
+                className="w-full px-4 py-2.5 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 mb-2"
+              />
+              <button
+                type="button"
+                onClick={handleReply}
+                disabled={replySubmitting || !replyBody.trim()}
+                className="px-4 py-2 rounded-lg text-sm font-medium bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 disabled:pointer-events-none"
+              >
+                {replySubmitting ? "등록 중…" : "답변 등록"}
+              </button>
+            </div>
+          )}
+          {detail.replies.length > 0 && (
+            <ul className="space-y-4">
+              {detail.replies.map((r) => (
+                <li
+                  key={r.id}
+                  className="pl-4 border-l-2 border-indigo-200 py-1"
+                >
+                  <p className="text-sm text-slate-700 whitespace-pre-wrap">
+                    {r.body}
+                  </p>
+                  <p className="text-xs text-slate-500 mt-2">
+                    {r.author && `${r.author} · `}
+                    {formatDate(r.created_at)}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       )}
     </div>

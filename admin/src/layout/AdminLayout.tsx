@@ -1,8 +1,16 @@
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import { Outlet, NavLink, useLocation, useNavigate } from "react-router-dom";
-import { refreshSession } from "../api";
-import { clearToken, getToken, setToken, getTokenExpiresAtMs } from "../auth";
+import { getMe, refreshSession } from "../api";
+import {
+  clearToken,
+  getRole,
+  getToken,
+  setRole,
+  setToken,
+  getTokenExpiresAtMs,
+  type UserRole,
+} from "../auth";
 
 const navItems: {
   to: string;
@@ -142,8 +150,23 @@ export function AdminLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const search = location.search || "";
+  const [role, setRoleState] = useState<UserRole | null>(() => getRole());
   const [remaining, setRemaining] = useState<string>("");
   const [extending, setExtending] = useState(false);
+
+  useEffect(() => {
+    if (role) return;
+    getMe()
+      .then((me) => {
+        const r: UserRole = me.role === "admin" ? "admin" : "client";
+        setRole(r);
+        setRoleState(r);
+      })
+      .catch(() => {
+        clearToken();
+        navigate("/login", { replace: true });
+      });
+  }, [role, navigate]);
 
   const handleExtend = async () => {
     setExtending(true);
@@ -196,16 +219,10 @@ export function AdminLayout() {
           </span>
         </div>
         <nav className="p-3 flex flex-col gap-0.5 flex-1">
-          {navItems.map(({ to, label, icon, disabled }) =>
-            disabled ? (
-              <span
-                key={to}
-                className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 cursor-not-allowed opacity-75"
-              >
-                {icon}
-                {label}
-              </span>
-            ) : (
+          {navItems
+            .filter((item) => role !== "admin" || item.to === "/inquiry")
+            .filter((item) => !item.disabled)
+            .map(({ to, label, icon }) => (
               <NavLink
                 key={to}
                 to={`${to}${search}`}
@@ -220,8 +237,7 @@ export function AdminLayout() {
                 {icon}
                 {label}
               </NavLink>
-            )
-          )}
+            ))}
         </nav>
         <div className="p-3 border-t border-slate-100 space-y-1">
           {remaining && (

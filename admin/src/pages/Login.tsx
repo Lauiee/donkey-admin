@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { setToken } from "../auth";
-import { login } from "../api";
+import { setRole, setToken } from "../auth";
+import { getMe, login } from "../api";
 
 export function Login() {
   const navigate = useNavigate();
@@ -17,7 +17,12 @@ export function Login() {
     try {
       const { access_token } = await login(userId, password);
       setToken(access_token);
-      navigate("/dashboard", { replace: true });
+      const me = await getMe();
+      const role = me.role === "admin" ? "admin" : "client";
+      setRole(role);
+      navigate(role === "admin" ? "/inquiry" : "/dashboard", {
+        replace: true,
+      });
     } catch (err) {
       let msg = err instanceof Error ? err.message : "로그인에 실패했습니다.";
       if (msg.includes("Failed to fetch") || msg.includes("NetworkError")) {
