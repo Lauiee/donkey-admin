@@ -26,6 +26,11 @@ function statusColor(s: string) {
   return map[s] ?? "bg-slate-100 text-slate-700";
 }
 
+function isImageUrl(url: string): boolean {
+  const ext = url.split(".").pop()?.toLowerCase().replace(/\?.*/, "") ?? "";
+  return ["jpg", "jpeg", "png", "gif", "webp", "svg", "bmp"].includes(ext);
+}
+
 function formatDate(iso: string) {
   try {
     const d = new Date(iso);
@@ -216,20 +221,36 @@ export function InquiryDetail() {
               <p className="text-xs font-medium text-slate-500 mb-2">
                 첨부파일
               </p>
-              <ul className="space-y-1">
+              <div className="space-y-4">
                 {detail.attachment_urls.map((url, i) => (
-                  <li key={i}>
-                    <a
-                      href={url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-sm text-indigo-600 hover:underline"
-                    >
-                      {url.split("/").pop() ?? url}
-                    </a>
-                  </li>
+                  <div key={i}>
+                    {isImageUrl(url) ? (
+                      <a
+                        href={url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block"
+                      >
+                        <img
+                          src={url}
+                          alt={url.split("/").pop() ?? "첨부 이미지"}
+                          className="max-w-full max-h-80 rounded-lg border border-slate-200 object-contain"
+                          loading="lazy"
+                        />
+                      </a>
+                    ) : (
+                      <a
+                        href={url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-indigo-600 hover:underline"
+                      >
+                        {url.split("/").pop() ?? url}
+                      </a>
+                    )}
+                  </div>
                 ))}
-              </ul>
+              </div>
             </div>
           )}
         </div>
