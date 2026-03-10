@@ -220,24 +220,42 @@ export function AdminLayout() {
         </div>
         <nav className="p-3 flex flex-col gap-0.5 flex-1">
           {navItems
-            .filter((item) => role !== "admin" || item.to === "/inquiry")
-            .filter((item) => !item.disabled)
-            .map(({ to, label, icon }) => (
-              <NavLink
-                key={to}
-                to={`${to}${search}`}
-                className={({ isActive }) =>
-                  `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                    isActive
-                      ? "bg-indigo-50 text-indigo-700 border border-indigo-100"
-                      : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
-                  }`
-                }
-              >
-                {icon}
-                {label}
-              </NavLink>
-            ))}
+            .filter(
+              (item) =>
+                role !== "admin" ||
+                item.to === "/inquiry" ||
+                item.to === "/turing"
+            )
+            .filter(
+              (item) =>
+                !item.disabled || (role === "admin" && item.to === "/turing")
+            )
+            .map(({ to, label, icon, disabled }) =>
+              disabled ? (
+                <span
+                  key={to}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 cursor-not-allowed opacity-75"
+                >
+                  {icon}
+                  {label}
+                </span>
+              ) : (
+                <NavLink
+                  key={to}
+                  to={`${to}${search}`}
+                  className={({ isActive }) =>
+                    `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                      isActive
+                        ? "bg-indigo-50 text-indigo-700 border border-indigo-100"
+                        : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                    }`
+                  }
+                >
+                  {icon}
+                  {label}
+                </NavLink>
+              )
+            )}
         </nav>
         <div className="p-3 border-t border-slate-100 space-y-1">
           {remaining && (
