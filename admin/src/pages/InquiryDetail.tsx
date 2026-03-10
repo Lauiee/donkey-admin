@@ -57,6 +57,7 @@ export function InquiryDetail() {
   const [editUploading, setEditUploading] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
   const fileInputActiveRef = useRef(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -306,23 +307,33 @@ export function InquiryDetail() {
                   </ul>
                 )}
                 <input
+                  ref={fileInputRef}
                   type="file"
                   multiple
-                  onMouseDown={() => {
+                  className="hidden"
+                  onChange={(e) => {
+                    const input = e.currentTarget;
+                    const files = input.files;
+                    if (files && files.length > 0) {
+                      const list = Array.from(files);
+                      setEditFiles((prev) => [...prev, ...list]);
+                    }
+                    input.value = "";
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => {
                     fileInputActiveRef.current = true;
                     setTimeout(() => {
                       fileInputActiveRef.current = false;
                     }, 1500);
+                    fileInputRef.current?.click();
                   }}
-                  onChange={(e) => {
-                    const files = e.target.files;
-                    if (files?.length) {
-                      setEditFiles((prev) => [...prev, ...Array.from(files)]);
-                    }
-                    e.target.value = "";
-                  }}
-                  className="block w-full text-sm text-slate-600 file:mr-4 file:py-2 file:px-3 file:rounded-lg file:border file:border-slate-200 file:text-sm file:font-medium file:bg-slate-50"
-                />
+                  className="px-3 py-2 rounded-lg text-sm font-medium border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100"
+                >
+                  파일 선택
+                </button>
                 {editFiles.length > 0 && (
                   <ul className="mt-2 space-y-1 text-sm text-slate-600">
                     {editFiles.map((f, i) => (

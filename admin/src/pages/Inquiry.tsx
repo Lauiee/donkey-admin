@@ -78,6 +78,7 @@ export function Inquiry() {
   const [createError, setCreateError] = useState<string | null>(null);
   const [projects, setProjects] = useState<ProjectItem[]>([]);
   const fileInputActiveRef = useRef(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedProject, setSelectedProject] = useState(
     searchParams.get("project_id") ?? ""
   );
@@ -283,23 +284,33 @@ export function Inquiry() {
                   첨부파일
                 </label>
                 <input
+                  ref={fileInputRef}
                   type="file"
                   multiple
-                  onMouseDown={() => {
+                  className="hidden"
+                  onChange={(e) => {
+                    const input = e.currentTarget;
+                    const files = input.files;
+                    if (files && files.length > 0) {
+                      const list = Array.from(files);
+                      setCreateFiles((prev) => [...prev, ...list]);
+                    }
+                    input.value = "";
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => {
                     fileInputActiveRef.current = true;
                     setTimeout(() => {
                       fileInputActiveRef.current = false;
                     }, 1500);
+                    fileInputRef.current?.click();
                   }}
-                  onChange={(e) => {
-                    const files = e.target.files;
-                    if (files?.length) {
-                      setCreateFiles((prev) => [...prev, ...Array.from(files)]);
-                    }
-                    e.target.value = "";
-                  }}
-                  className="block w-full text-sm text-slate-600 file:mr-4 file:py-2 file:px-3 file:rounded-lg file:border file:border-slate-200 file:text-sm file:font-medium file:bg-slate-50 file:text-slate-700 hover:file:bg-slate-100"
-                />
+                  className="px-3 py-2 rounded-lg text-sm font-medium border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100"
+                >
+                  파일 선택
+                </button>
                 {createFiles.length > 0 && (
                   <ul className="mt-2 space-y-1 text-sm text-slate-600">
                     {createFiles.map((f, i) => (
