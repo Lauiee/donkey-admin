@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import {
   deleteInquiry,
@@ -56,6 +56,7 @@ export function InquiryDetail() {
   const [editSubmitting, setEditSubmitting] = useState(false);
   const [editUploading, setEditUploading] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
+  const fileInputActiveRef = useRef(false);
 
   useEffect(() => {
     if (!id) return;
@@ -237,7 +238,10 @@ export function InquiryDetail() {
       {editModalOpen && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-          onClick={() => !editSubmitting && setEditModalOpen(false)}
+          onClick={() => {
+            if (fileInputActiveRef.current) return;
+            if (!editSubmitting) setEditModalOpen(false);
+          }}
         >
           <div
             className="admin-card w-full max-w-lg max-h-[90vh] overflow-y-auto"
@@ -304,10 +308,17 @@ export function InquiryDetail() {
                 <input
                   type="file"
                   multiple
+                  onMouseDown={() => {
+                    fileInputActiveRef.current = true;
+                    setTimeout(() => {
+                      fileInputActiveRef.current = false;
+                    }, 1500);
+                  }}
                   onChange={(e) => {
                     const files = e.target.files;
-                    if (files)
+                    if (files?.length) {
                       setEditFiles((prev) => [...prev, ...Array.from(files)]);
+                    }
                     e.target.value = "";
                   }}
                   className="block w-full text-sm text-slate-600 file:mr-4 file:py-2 file:px-3 file:rounded-lg file:border file:border-slate-200 file:text-sm file:font-medium file:bg-slate-50"

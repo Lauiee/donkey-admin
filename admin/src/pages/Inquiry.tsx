@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { ProjectSelect } from "../components/ProjectSelect";
 import {
@@ -77,6 +77,7 @@ export function Inquiry() {
   const [createSubmitting, setCreateSubmitting] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
   const [projects, setProjects] = useState<ProjectItem[]>([]);
+  const fileInputActiveRef = useRef(false);
   const [selectedProject, setSelectedProject] = useState(
     searchParams.get("project_id") ?? ""
   );
@@ -230,7 +231,10 @@ export function Inquiry() {
       {createModalOpen && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-          onClick={() => !createSubmitting && setCreateModalOpen(false)}
+          onClick={() => {
+            if (fileInputActiveRef.current) return;
+            if (!createSubmitting) setCreateModalOpen(false);
+          }}
         >
           <div
             className="admin-card w-full max-w-lg"
@@ -281,10 +285,17 @@ export function Inquiry() {
                 <input
                   type="file"
                   multiple
+                  onMouseDown={() => {
+                    fileInputActiveRef.current = true;
+                    setTimeout(() => {
+                      fileInputActiveRef.current = false;
+                    }, 1500);
+                  }}
                   onChange={(e) => {
                     const files = e.target.files;
-                    if (files)
+                    if (files?.length) {
                       setCreateFiles((prev) => [...prev, ...Array.from(files)]);
+                    }
                     e.target.value = "";
                   }}
                   className="block w-full text-sm text-slate-600 file:mr-4 file:py-2 file:px-3 file:rounded-lg file:border file:border-slate-200 file:text-sm file:font-medium file:bg-slate-50 file:text-slate-700 hover:file:bg-slate-100"
