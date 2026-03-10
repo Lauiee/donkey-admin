@@ -4,8 +4,10 @@ import { getRole } from "../auth";
 import {
   createInquiryReply,
   deleteInquiry,
+  deleteInquiryReply,
   getInquiryDetail,
   updateInquiry,
+  updateInquiryReply,
   updateInquiryStatus,
   uploadInquiryAttachment,
   type InquiryDetail,
@@ -65,6 +67,8 @@ export function InquiryDetail() {
   const [deleting, setDeleting] = useState(false);
   const [replyBody, setReplyBody] = useState("");
   const [replySubmitting, setReplySubmitting] = useState(false);
+  const [editingReplyId, setEditingReplyId] = useState<string | null>(null);
+  const [editingReplyBody, setEditingReplyBody] = useState("");
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editTitle, setEditTitle] = useState("");
   const [editBody, setEditBody] = useState("");
@@ -132,6 +136,52 @@ export function InquiryDetail() {
       setEditError(e instanceof Error ? e.message : "수정 실패");
     } finally {
       setEditSubmitting(false);
+    }
+  };
+
+  const handleReplyEdit = async () => {
+    if (!id || !editingReplyId || !editingReplyBody.trim()) return;
+    try {
+      const updated = await updateInquiryReply(
+        id,
+        editingReplyId,
+        editingReplyBody.trim()
+      );
+      setDetail((prev) =>
+        prev
+          ? {
+              ...prev,
+              replies: prev.replies.map((r) =>
+                r.id === editingReplyId ? updated : r
+              ),
+            }
+          : prev
+      );
+      setEditingReplyId(null);
+      setEditingReplyBody("");
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "답변 수정 실패");
+    }
+  };
+
+  const handleReplyDelete = async (replyId: string) => {
+    if (!id || !window.confirm("이 답변을 삭제하시겠습니까?")) return;
+    try {
+      await deleteInquiryReply(id, replyId);
+      setDetail((prev) =>
+        prev
+          ? {
+              ...prev,
+              replies: prev.replies.filter((r) => r.id !== replyId),
+            }
+          : prev
+      );
+      if (editingReplyId === replyId) {
+        setEditingReplyId(null);
+        setEditingReplyBody("");
+      }
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "답변 삭제 실패");
     }
   };
 
@@ -500,13 +550,69 @@ export function InquiryDetail() {
                   key={r.id}
                   className="pl-4 border-l-2 border-indigo-200 py-1"
                 >
-                  <p className="text-sm text-slate-700 whitespace-pre-wrap">
-                    {r.body}
-                  </p>
-                  <p className="text-xs text-slate-500 mt-2">
-                    {r.author && `${r.author} · `}
-                    {formatDate(r.created_at)}
-                  </p>
+                  {isAdmin && editingReplyId === r.id ? (
+                    <div>
+                      <textarea
+                        value={editingReplyBody}
+                        onChange={(e) => setEditingReplyBody(e.target.value)}
+                        rows={3}
+                        className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 mb-2"
+                      />
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={handleReplyEdit}
+                          disabled={!editingReplyBody.trim()}
+                          className="px-3 py-1.5 rounded-lg text-sm font-medium bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50"
+                        >
+                          저장
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingReplyId(null);
+                            setEditingReplyBody("");
+                          }}
+                          className="px-3 py-1.5 rounded-lg text-sm font-medium text-slate-600 bg-slate-100 hover:bg-slate-200"
+                        >
+                          취소
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <p className="text-sm text-slate-700 whitespace-pre-wrap">
+                        {r.body}
+                      </p>
+                      <div className="flex items-center gap-2 mt-2">
+                        <p className="text-xs text-slate-500">
+                          {r.author && `${r.author} · `}
+                          {formatDate(r.created_at)}
+                        </p>
+                        {isAdmin && (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditingReplyId(r.id);
+                                setEditingReplyBody(r.body);
+                              }}
+                              className="text-xs text-indigo-600 hover:underline"
+                            >
+                              수정
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleReplyDelete(r.id)}
+                              className="text-xs text-red-600 hover:underline"
+                            >
+                              삭제
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </>
+                  )}
                 </li>
               ))}
             </ul>

@@ -604,6 +604,63 @@ export async function createInquiryReply(
   return res.json();
 }
 
+/** 답변 수정 (role=admin 전용) */
+export async function updateInquiryReply(
+  inquiryId: string,
+  replyId: string,
+  body: string
+): Promise<{
+  id: string;
+  body: string;
+  created_at: string;
+  author: string | null;
+}> {
+  const res = await fetch(
+    `${API_BASE}/admin/api/inquiries/${encodeURIComponent(
+      inquiryId
+    )}/replies/${encodeURIComponent(replyId)}`,
+    {
+      method: "PATCH",
+      headers: getHeaders(),
+      body: JSON.stringify({ body }),
+    }
+  );
+  if (!res.ok) {
+    const resBody = (await res.json().catch(() => ({}))) as {
+      detail?: string | { message?: string };
+    };
+    const msg =
+      (typeof resBody?.detail === "string"
+        ? resBody.detail
+        : resBody?.detail?.message) || `답변 수정 실패 (${res.status})`;
+    throw new Error(msg);
+  }
+  return res.json();
+}
+
+/** 답변 삭제 (role=admin 전용) */
+export async function deleteInquiryReply(
+  inquiryId: string,
+  replyId: string
+): Promise<void> {
+  const res = await fetch(
+    `${API_BASE}/admin/api/inquiries/${encodeURIComponent(
+      inquiryId
+    )}/replies/${encodeURIComponent(replyId)}`,
+    { method: "DELETE", headers: getHeaders() }
+  );
+  if (!res.ok) {
+    const resBody = (await res.json().catch(() => ({}))) as {
+      detail?: string | { message?: string };
+    };
+    const msg =
+      (typeof resBody?.detail === "string"
+        ? resBody.detail
+        : resBody?.detail?.message) || `답변 삭제 실패 (${res.status})`;
+    throw new Error(msg);
+  }
+}
+
 /** 세션 연장: 새 토큰(4시간) 발급 후 저장용 반환 */
 export async function refreshSession(): Promise<{ access_token: string }> {
   const res = await fetch(`${API_BASE}/admin/api/refresh`, {
