@@ -59,6 +59,7 @@ const navItems: {
   {
     to: "/billing",
     label: "비용",
+    disabled: true,
     icon: (
       <svg
         className="w-5 h-5 shrink-0"
@@ -226,7 +227,12 @@ export function AdminLayout() {
                 item.to === "/inquiry" ||
                 item.to === "/turing"
             )
-            .filter((item) => !item.disabled || item.to === "/turing")
+            .filter(
+              (item) =>
+                !item.disabled ||
+                item.to === "/turing" ||
+                item.to === "/billing"
+            )
             .map(({ to, label, icon, disabled }) =>
               disabled ? (
                 <span
