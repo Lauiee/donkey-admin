@@ -226,10 +226,7 @@ export function AdminLayout() {
                 item.to === "/inquiry" ||
                 item.to === "/turing"
             )
-            .filter(
-              (item) =>
-                !item.disabled || (role === "admin" && item.to === "/turing")
-            )
+            .filter((item) => !item.disabled || item.to === "/turing")
             .map(({ to, label, icon, disabled }) =>
               disabled ? (
                 <span
