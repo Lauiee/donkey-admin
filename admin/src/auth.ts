@@ -1,5 +1,5 @@
-const TOKEN_KEY = "donkey_admin_token";
-const ROLE_KEY = "donkey_admin_role";
+const TOKEN_KEY = "nbrief_admin_token";
+const ROLE_KEY = "nbrief_admin_role";
 
 export type UserRole = "client" | "admin";
 

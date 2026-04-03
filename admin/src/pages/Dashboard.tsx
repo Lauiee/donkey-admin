@@ -353,7 +353,7 @@ export function Dashboard() {
         </div>
         <div className="admin-card p-5">
           <p className="text-sm font-medium text-slate-500">
-            일 평균 동키 요청량(최근 30일)
+            일 평균 엔브리프 요청량(최근 30일)
           </p>
           <p className="text-2xl font-semibold text-slate-900 mt-1">
             {stats.month_count != null

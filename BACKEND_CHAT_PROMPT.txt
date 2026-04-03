@@ -1,4 +1,4 @@
-Donkey Admin 백엔드 API 수정 요청해.
+NBrief Admin 백엔드 API 수정 요청해.
 
 1. 새 API 추가: GET /admin/api/projects
    - Response: { "items": [{ "id": "project-id-1", "name": "프로젝트 A" }, ...] }

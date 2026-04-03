@@ -216,7 +216,7 @@ export function AdminLayout() {
       <aside className="w-60 h-screen bg-white border-r border-slate-200 flex flex-col shrink-0 shadow-sm overflow-y-auto">
         <div className="h-14 px-4 flex items-center border-b border-slate-100">
           <span className="font-semibold text-slate-800 tracking-tight">
-            Donkey
+            NBrief
           </span>
         </div>
         <nav className="p-3 flex flex-col gap-0.5 flex-1">

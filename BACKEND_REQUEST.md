@@ -1,4 +1,4 @@
-# Donkey Admin 백엔드 API 수정 요청
+# NBrief Admin 백엔드 API 수정 요청
 
 프론트엔드에서 프로젝트별 대시보드를 구현했습니다. 아래 API를 추가/수정해주세요.
 
