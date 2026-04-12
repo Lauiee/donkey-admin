@@ -117,7 +117,6 @@ const navItems: {
   {
     to: "/turing",
     label: "튜링",
-    disabled: true,
     icon: (
       <svg
         className="w-5 h-5 shrink-0"
@@ -228,10 +227,7 @@ export function AdminLayout() {
                 item.to === "/turing"
             )
             .filter(
-              (item) =>
-                !item.disabled ||
-                item.to === "/turing" ||
-                item.to === "/billing"
+              (item) => !item.disabled || item.to === "/billing"
             )
             .map(({ to, label, icon, disabled }) =>
               disabled ? (
