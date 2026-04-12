@@ -5,8 +5,13 @@ import { TURING_PALETTE, turingTierDotFill } from "./turingPalette";
 
 type Props = {
   title: string;
-  /** 꼭지 순서대로 0~1 (차트 반지름), 길이 7 */
-  values: number[];
+  /** 하단 표·툴팁용 원시 지표(스펙 값). % 행은 이 값을 그대로 포맷 */
+  values: (number | null)[];
+  /**
+   * 차트 다각형·점 위치만 — 0~1, 클수록 바깥(우수 방향 통일).
+   * 생략 시 values 로 그림(하위 호환).
+   */
+  chartRadii?: (number | null)[];
   chartLabels: readonly string[];
   listLabels: readonly string[];
   /** 각 꼭지 등급 — 속도만 표시 축은 neutral */
@@ -45,6 +50,7 @@ function NeutralBadge() {
 export function HeptagonRadar({
   title,
   values,
+  chartRadii,
   chartLabels,
   listLabels,
   tiers,
@@ -52,7 +58,9 @@ export function HeptagonRadar({
   secondsValues,
 }: Props) {
   const gradId = useId().replace(/:/g, "");
-  const pts = Array.from({ length: N }, (_, i) => clamp01(values[i] ?? 0));
+  const pts = Array.from({ length: N }, (_, i) =>
+    clamp01((chartRadii ?? values)[i] ?? 0)
+  );
 
   const size = 300;
   const cx = size / 2;
@@ -182,10 +190,13 @@ export function HeptagonRadar({
             const label = listLabels[i] ?? "";
             const tier = tiers[i] ?? "neutral";
             const rawSec = secondsValues?.[i];
+            const val = values[i];
             const display =
-              fmt[i] === "seconds" && rawSec != null
-                ? `${rawSec < 100 ? rawSec.toFixed(1) : rawSec.toFixed(0)}초`
-                : formatPercent(values[i] ?? 0);
+              val === null
+                ? "—"
+                : fmt[i] === "seconds" && rawSec != null
+                  ? `${rawSec < 100 ? rawSec.toFixed(1) : rawSec.toFixed(0)}초`
+                  : formatPercent(val);
 
             return (
               <div
@@ -196,7 +207,11 @@ export function HeptagonRadar({
                   {label}
                 </span>
                 <span className="flex items-center gap-2 shrink-0">
-                  {tier === "neutral" ? (
+                  {val === null ? (
+                    <span className="text-[10px] font-medium text-[#5B6B95] shrink-0">
+                      미지원
+                    </span>
+                  ) : tier === "neutral" ? (
                     <NeutralBadge />
                   ) : (
                     <TierBadge tier={tier} palette="turing" />

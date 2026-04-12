@@ -1,5 +1,5 @@
 /**
- * 튜링 대시보드 COLOR PALETTE
+ * Turing 대시보드 COLOR PALETTE
  * Primary/Base 60% · Secondary(다이어그램) 30% · Accent 10%
  */
 import type { MetricTier } from "./metricGrades";

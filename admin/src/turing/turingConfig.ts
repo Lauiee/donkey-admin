@@ -1,5 +1,5 @@
 /**
- * 튜링 대시보드 — 차트 라벨 등.
+ * Turing 대시보드 — 차트 라벨 등.
  * 등급·임계값은 metricGrades.ts 를 참고하세요.
  */
 
@@ -44,3 +44,6 @@ export const SUMMARY_RADAR_LIST_LABELS = [
   "MIR (Medical Information Recall)",
   "SSA (Structured Summary Accuracy)",
 ] as const;
+
+/** GET /evaluations — 페이지당 건수(이 페이지 목록으로 지표 평균 산출) */
+export const TURING_EVALUATIONS_PAGE_SIZE = 10;

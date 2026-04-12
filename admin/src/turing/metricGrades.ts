@@ -1,5 +1,5 @@
 /**
- * 튜링 지표 등급 (우수 / 보통 / 미흡).
+ * Turing 지표 등급 (우수 / 보통 / 미흡).
  * 기준은 제품 스펙 테이블과 동일.
  */
 
@@ -200,8 +200,24 @@ export function tierToDotColor(t: MetricTier | "neutral"): string {
   return TIER_COLOR[t];
 }
 
-/** 차트 반지름용 — STT velocity 비율: 낮을수록 좋음 → 낮을수록 바깥으로 */
+/** 차트 반지름용 — STT velocity 비율: 낮을수록 좋음 → 우수일수록 바깥으로 */
 export function sttVelocityRatioToRadius01(ratio: number): number {
   const { vmax } = VELOCITY_GAUGE.stt;
   return clamp(1 - ratio / vmax, 0, 1);
+}
+
+/** 0~1 비율, 낮을수록 우수(UER·MMR 등) — 레이더에서는 클수록 바깥 = 좋음 */
+export function lowerRatioToRadius01(ratio: number): number {
+  return clamp(1 - clamp(ratio, 0, 1), 0, 1);
+}
+
+/** 0~1 비율, 높을수록 우수(PII·Diarization·SSR 등) — 그대로 반지름 */
+export function higherRatioToRadius01(ratio: number): number {
+  return clamp(ratio, 0, 1);
+}
+
+/** 요약 속도 — 낮을수록 좋음 → 우수일수록 바깥 */
+export function summarizationVelocityToRadius01(v: number): number {
+  const { vmax } = VELOCITY_GAUGE.summarization;
+  return clamp(1 - Math.min(Math.max(v, 0) / vmax, 1), 0, 1);
 }

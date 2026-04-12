@@ -117,7 +117,7 @@ const navItems: {
   },
   {
     to: "/turing",
-    label: "튜링",
+    label: "Turing",
     icon: (
       <svg
         className="w-5 h-5 shrink-0"

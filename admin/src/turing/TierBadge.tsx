@@ -7,7 +7,7 @@ const BG: Record<MetricTier, string> = {
   poor: "bg-red-100 text-red-900 ring-red-200",
 };
 
-/** 튜링 팔레트 — Secondary 계열 */
+/** Turing 팔레트 — Secondary 계열 */
 const BG_TURING: Record<MetricTier, string> = {
   excellent:
     "bg-[#7B8DB8]/25 text-[#0A2465] ring-[#7B8DB8]/45",
