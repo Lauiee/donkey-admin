@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { HeptagonRadar } from "../turing/HeptagonRadar";
 import {
-  sttVelocitySecToRadius01,
+  sttVelocityRatioToRadius01,
   tiersForSttRadar,
   tiersForSummaryRadar,
 } from "../turing/metricGrades";
@@ -13,12 +13,12 @@ import {
 } from "../turing/turingConfig";
 import { VelocityGauge } from "../turing/VelocityGauge";
 
-/** API 연동 전 데모 — 속도(일부)는 초·0~1 혼합 */
+/** API 연동 전 데모 — Velocity 는 스펙 비율(낮을수록 좋음, 상단 게이지와 동일) */
 const DEMO = {
   processingVelocity01: 0.72,
   summarizationVelocity01: 0.65,
   stt: {
-    velocitySec: 8.5,
+    velocityRatio: 0.35,
     uer: 0.08,
     piiProtection: 0.92,
     mmr: 0.12,
@@ -38,7 +38,7 @@ const DEMO = {
 } as const;
 
 const STT_ROW_FORMATS: Array<"percent" | "seconds"> = [
-  "seconds",
+  "percent",
   "percent",
   "percent",
   "percent",
@@ -61,7 +61,7 @@ export function Turing() {
   const [demo] = useState(DEMO);
 
   const sttTiers = tiersForSttRadar({
-    sttVelocitySec: demo.stt.velocitySec,
+    sttVelocityRatio: demo.stt.velocityRatio,
     uer: demo.stt.uer,
     piiProtection: demo.stt.piiProtection,
     mmr: demo.stt.mmr,
@@ -80,7 +80,7 @@ export function Turing() {
   });
 
   const sttRadarValues = [
-    sttVelocitySecToRadius01(demo.stt.velocitySec),
+    sttVelocityRatioToRadius01(demo.stt.velocityRatio),
     demo.stt.uer,
     demo.stt.piiProtection,
     demo.stt.mmr,
@@ -99,40 +99,33 @@ export function Turing() {
     demo.summary.ssa,
   ];
 
-  const sttSecondsRow = [
-    demo.stt.velocitySec,
-    undefined,
-    undefined,
-    undefined,
-    undefined,
-    undefined,
-    undefined,
-  ];
-
   return (
-    <div>
-      <h2 className="admin-page-title mb-2">튜링</h2>
-      <p className="text-sm text-slate-500 mb-8">
+    <div className="rounded-2xl bg-[#F4F7FA] -mx-4 px-4 py-6 sm:-mx-6 sm:px-6 md:mx-0 md:px-8 md:py-8">
+      <h2 className="text-2xl font-semibold tracking-tight text-[#000000] mb-2">
+        튜링
+      </h2>
+      <p className="text-sm text-[#5B6B95] mb-8">
         지표별 우수·보통·미흡 기준은{" "}
-        <code className="text-slate-700">metricGrades.ts</code>에 반영되어 있습니다.
-        비율 지표는 API 0~1 값을 %로 표시하고, STT 속도는 초 단위로 표시합니다.
+        <code className="text-[#0A2465] bg-white/80 px-1 rounded">metricGrades.ts</code>
+        에 반영되어 있습니다. Velocity·비율 지표는 API 0~1 스펙 값을 %로 표시합니다 (낮을수록
+        좋음).
       </p>
 
       <section className="mb-10">
-        <h3 className="text-sm font-semibold text-slate-700 mb-4">Velocity</h3>
+        <h3 className="text-sm font-semibold text-[#0A2465] mb-4">Velocity</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <VelocityGauge
-            variant="neutral"
+            variant="processing"
             title="Processing Velocity"
             value01={demo.processingVelocity01}
           />
           <VelocityGauge
             variant="stt"
             title="STT Velocity"
-            seconds={demo.stt.velocitySec}
+            value01={demo.stt.velocityRatio}
           />
           <VelocityGauge
-            variant="neutral"
+            variant="summarization"
             title="Summarization Velocity"
             value01={demo.summarizationVelocity01}
           />
@@ -140,7 +133,7 @@ export function Turing() {
       </section>
 
       <section>
-        <h3 className="text-sm font-semibold text-slate-700 mb-4">상세 지표</h3>
+        <h3 className="text-sm font-semibold text-[#0A2465] mb-4">상세 지표</h3>
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
           <HeptagonRadar
             title="STT"
@@ -149,7 +142,6 @@ export function Turing() {
             listLabels={STT_RADAR_LIST_LABELS}
             tiers={sttTiers}
             rowFormats={STT_ROW_FORMATS}
-            secondsValues={sttSecondsRow}
           />
           <HeptagonRadar
             title="Summary (SOAP)"

@@ -1,7 +1,7 @@
 import { useId } from "react";
 import type { MetricTier } from "./metricGrades";
-import { tierToDotColor } from "./metricGrades";
 import { TierBadge } from "./TierBadge";
+import { TURING_PALETTE, turingTierDotFill } from "./turingPalette";
 
 type Props = {
   title: string;
@@ -30,6 +30,16 @@ function angleAt(i: number): number {
 
 function formatPercent(v: number): string {
   return `${Math.round(clamp01(v) * 1000) / 10}%`;
+}
+
+function NeutralBadge() {
+  return (
+    <span
+      className="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1 shrink-0 bg-[#7B8DB8]/15 text-[#5B6B95] ring-[#7B8DB8]/35"
+    >
+      속도만
+    </span>
+  );
 }
 
 export function HeptagonRadar({
@@ -74,9 +84,11 @@ export function HeptagonRadar({
 
   const fmt = rowFormats ?? Array(N).fill("percent" as const);
 
+  const rowPairs = Math.ceil(N / 2);
+
   return (
-    <div className="admin-card p-5">
-      <h3 className="text-sm font-semibold text-slate-800 text-center mb-4">
+    <div className="admin-card border-[#E2E8F0] bg-white p-5">
+      <h3 className="text-sm font-semibold text-[#0A2465] text-center mb-4">
         {title}
       </h3>
       <div className="flex justify-center overflow-x-auto">
@@ -88,8 +100,8 @@ export function HeptagonRadar({
         >
           <defs>
             <linearGradient id={`rf-${gradId}`} x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stopColor="#a78bfa" stopOpacity="0.28" />
-              <stop offset="100%" stopColor="#7c3aed" stopOpacity="0.2" />
+              <stop offset="0%" stopColor={TURING_PALETTE.secondary.mintBlue} stopOpacity="0.35" />
+              <stop offset="100%" stopColor={TURING_PALETTE.secondary.navy} stopOpacity="0.22" />
             </linearGradient>
           </defs>
 
@@ -101,7 +113,8 @@ export function HeptagonRadar({
                 return `${p.x},${p.y}`;
               }).join(" ")}
               fill="none"
-              stroke="#e2e8f0"
+              stroke={TURING_PALETTE.secondary.slateBlue}
+              strokeOpacity={lv === 1 ? 0.22 : 0.14}
               strokeWidth={lv === 1 ? 1.5 : 1}
             />
           ))}
@@ -109,21 +122,22 @@ export function HeptagonRadar({
           <polygon
             points={outerPoly}
             fill="none"
-            stroke="#cbd5e1"
+            stroke={TURING_PALETTE.secondary.slateBlue}
+            opacity={0.45}
             strokeWidth={1.5}
           />
 
           <polygon
             points={dataPoly}
             fill={`url(#rf-${gradId})`}
-            stroke="#6d28d9"
+            stroke={TURING_PALETTE.secondary.navy}
             strokeWidth={2}
             strokeLinejoin="round"
           />
 
           {pts.map((v, i) => {
             const p = vertex(i, maxR * v);
-            const fill = tierToDotColor(tiers[i] ?? "neutral");
+            const fill = turingTierDotFill(tiers[i] ?? "neutral");
             return (
               <circle
                 key={i}
@@ -147,7 +161,8 @@ export function HeptagonRadar({
                 y={p.y}
                 textAnchor="middle"
                 dominantBaseline="middle"
-                className="fill-slate-600 pointer-events-none"
+                className="pointer-events-none"
+                fill={TURING_PALETTE.secondary.slateBlue}
                 style={{ fontSize: 10 }}
               >
                 <title>{full}</title>
@@ -158,33 +173,46 @@ export function HeptagonRadar({
         </svg>
       </div>
 
-      <ul className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 text-xs text-slate-600">
-        {listLabels.map((label, i) => {
-          const tier = tiers[i] ?? "neutral";
-          const rawSec = secondsValues?.[i];
-          const display =
-            fmt[i] === "seconds" && rawSec != null
-              ? `${rawSec < 100 ? rawSec.toFixed(1) : rawSec.toFixed(0)}초`
-              : formatPercent(values[i] ?? 0);
+      <ul className="mt-4 space-y-2.5 text-xs text-[#5B6B95] list-none p-0 m-0">
+        {Array.from({ length: rowPairs }, (_, row) => {
+          const leftIdx = row * 2;
+          const rightIdx = leftIdx + 1;
+
+          const cell = (i: number) => {
+            const label = listLabels[i] ?? "";
+            const tier = tiers[i] ?? "neutral";
+            const rawSec = secondsValues?.[i];
+            const display =
+              fmt[i] === "seconds" && rawSec != null
+                ? `${rawSec < 100 ? rawSec.toFixed(1) : rawSec.toFixed(0)}초`
+                : formatPercent(values[i] ?? 0);
+
+            return (
+              <div
+                key={`${label}-${i}`}
+                className="flex items-center justify-between gap-3 min-h-[1.75rem] tabular-nums"
+              >
+                <span className="truncate min-w-0 flex-1" title={label}>
+                  {label}
+                </span>
+                <span className="flex items-center gap-2 shrink-0">
+                  {tier === "neutral" ? (
+                    <NeutralBadge />
+                  ) : (
+                    <TierBadge tier={tier} palette="turing" />
+                  )}
+                  <span className="font-medium text-[#000000] min-w-[3.5rem] text-right">
+                    {display}
+                  </span>
+                </span>
+              </div>
+            );
+          };
 
           return (
-            <li
-              key={`${label}-${i}`}
-              className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 tabular-nums"
-            >
-              <span className="truncate min-w-0" title={label}>
-                {label}
-              </span>
-              <span className="flex items-center gap-2 shrink-0">
-                {tier === "neutral" ? (
-                  <span className="text-[10px] text-slate-400 font-medium">
-                    속도만
-                  </span>
-                ) : (
-                  <TierBadge tier={tier} />
-                )}
-                <span className="font-medium text-slate-800">{display}</span>
-              </span>
+            <li key={`row-${row}`} className="grid grid-cols-2 gap-x-5 items-start">
+              {cell(leftIdx)}
+              {rightIdx < N ? cell(rightIdx) : <div aria-hidden />}
             </li>
           );
         })}

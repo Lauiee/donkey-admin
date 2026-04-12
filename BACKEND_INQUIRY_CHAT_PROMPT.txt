@@ -1,4 +1,4 @@
-NBrief Admin 문의(CS) API 구현 요청해.
+DONKEY Admin 문의(CS) API 구현 요청해.
 
 1. 문의 등록: POST /admin/api/inquiries
    - Body: { "title", "body", "project_id" }  (project_id 선택)

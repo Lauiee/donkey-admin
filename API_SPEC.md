@@ -1,6 +1,6 @@
-# NBrief Admin API 명세서
+# DONKEY Admin API 명세서
 
-NBrief Admin 프론트엔드에서 사용하는 백엔드 API 명세입니다. 백엔드 브랜치 변경 시 이 명세를 기준으로 API를 구현하세요.
+DONKEY Admin 프론트엔드에서 사용하는 백엔드 API 명세입니다. 백엔드 브랜치 변경 시 이 명세를 기준으로 API를 구현하세요.
 
 **공통**
 

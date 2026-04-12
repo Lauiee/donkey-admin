@@ -1,5 +1,12 @@
 import { useId } from "react";
-import { gradeSttVelocitySeconds, TIER_COLOR } from "./metricGrades";
+import {
+  type VelocityGaugeKind,
+  velocityGaugeArcSplits,
+  velocityGaugeNeedleT,
+  velocityGaugeTier,
+  VELOCITY_GAUGE,
+} from "./metricGrades";
+import { TURING_PALETTE, turingTierStroke } from "./turingPalette";
 import { TierBadge } from "./TierBadge";
 
 function clamp01(n: number): number {
@@ -12,25 +19,18 @@ function arcLargeFlag(t0: number, t1: number): 0 | 1 {
   return sweepDeg >= 180 ? 1 : 0;
 }
 
-type NeutralProps = {
-  variant: "neutral";
+export type VelocityGaugeProps = {
+  variant: VelocityGaugeKind;
   title: string;
-  /** 0~1, 표시는 % */
+  /** 0~1 스펙 비율 (낮을수록 좋음). processing 은 1 초과 가능 */
   value01: number;
 };
 
-type SttProps = {
-  variant: "stt";
-  title: string;
-  /** 초 단위 (API) */
-  seconds: number;
-};
-
-export type VelocityGaugeProps = NeutralProps | SttProps;
-
-/** 상단 반원 게이지 — processing/summarization 은 속도만(중립), STT 는 초·등급 색 */
+/** 상단 반원 게이지 — Velocity 스펙 테이블 임계값으로 등급·색 구간 */
 export function VelocityGauge(props: VelocityGaugeProps) {
   const filterId = useId().replace(/:/g, "");
+  const { variant, title, value01: raw } = props;
+  const v = Math.max(0, raw);
 
   const w = 200;
   const h = 132;
@@ -54,59 +54,22 @@ export function VelocityGauge(props: VelocityGaugeProps) {
     return `M ${a.x} ${a.y} A ${r} ${r} 0 ${large} 1 ${b.x} ${b.y}`;
   };
 
-  if (props.variant === "neutral") {
-    const v = clamp01(props.value01);
-    const needleAngle = Math.PI * (1 - v);
-    const needleLen = r - 4;
-    const nx = cx + needleLen * Math.cos(needleAngle);
-    const ny = cy - needleLen * Math.sin(needleAngle);
-    const pct = Math.round(v * 1000) / 10;
-
-    return (
-      <div className="admin-card p-5 flex flex-col items-center">
-        <div className="w-full flex items-center justify-center gap-2 mb-1 min-h-[1.5rem]">
-          <span className="text-sm font-medium text-slate-800 text-center">
-            {props.title}
-          </span>
-        </div>
-        <GaugeSvg
-          filterId={filterId}
-          arcPath={arcPath}
-          polar={polar}
-          cx={cx}
-          cy={cy}
-          r={r}
-          stroke={stroke}
-          w={w}
-          h={h}
-          nx={nx}
-          ny={ny}
-          arcMode="single-gray"
-        />
-        <p className="text-2xl font-semibold text-slate-900 tabular-nums -mt-1">
-          {pct}%
-        </p>
-        <p className="text-[11px] text-slate-500 mt-1">등급 없음 · 속도만 표시</p>
-      </div>
-    );
-  }
-
-  const sec = Math.max(0, props.seconds);
-  const tier = gradeSttVelocitySeconds(sec);
-  const needleT = clamp01(1 - Math.min(sec / 30, 1));
+  const tier = velocityGaugeTier(variant, v);
+  const needleT = clamp01(velocityGaugeNeedleT(variant, v));
+  const { tGreenEnd, tYellowEnd } = velocityGaugeArcSplits(variant);
   const needleAngle = Math.PI * (1 - needleT);
-  const needleLen = r - 4;
+  /** 호의 반지름(r)까지 — 너무 짧으면(r-4) 색 띠에 묻히고, 너무 길면 튀어 보임 */
+  const needleLen = r;
   const nx = cx + needleLen * Math.cos(needleAngle);
   const ny = cy - needleLen * Math.sin(needleAngle);
 
-  const t5 = 1 - 5 / 30;
-  const t15 = 1 - 15 / 30;
+  const pct = Math.round(v * 1000) / 10;
 
   return (
-    <div className="admin-card p-5 flex flex-col items-center">
+    <div className="admin-card border-[#E2E8F0] bg-white p-5 flex flex-col items-center">
       <div className="w-full flex items-center justify-center gap-2 mb-1 min-h-[1.5rem]">
-        <span className="text-sm font-medium text-slate-800 text-center">
-          {props.title}
+        <span className="text-sm font-medium text-[#000000] text-center">
+          {title}
         </span>
       </div>
       <GaugeSvg
@@ -121,18 +84,17 @@ export function VelocityGauge(props: VelocityGaugeProps) {
         h={h}
         nx={nx}
         ny={ny}
-        arcMode="stt-tiered"
-        tSplitA={t15}
-        tSplitB={t5}
+        tGreenEnd={tGreenEnd}
+        tYellowEnd={tYellowEnd}
       />
-      <p className="text-2xl font-semibold text-slate-900 tabular-nums -mt-1">
-        {sec < 100 ? sec.toFixed(1) : sec.toFixed(0)}초
+      <p className="text-2xl font-semibold text-[#000000] tabular-nums -mt-1">
+        {pct}%
       </p>
       <div className="mt-2">
-        <TierBadge tier={tier} />
+        <TierBadge tier={tier} palette="turing" />
       </div>
-      <p className="text-[11px] text-slate-500 mt-2 text-center px-1">
-        우수 &lt; 5초 · 보통 &lt; 15초 · 미흡 ≥ 15초
+      <p className="text-[11px] text-[#5B6B95] mt-2 text-center px-1">
+        {VELOCITY_GAUGE[variant].caption}
       </p>
     </div>
   );
@@ -150,9 +112,8 @@ function GaugeSvg({
   h,
   nx,
   ny,
-  arcMode,
-  tSplitA,
-  tSplitB,
+  tGreenEnd,
+  tYellowEnd,
 }: {
   filterId: string;
   arcPath: (t0: number, t1: number) => string;
@@ -165,9 +126,8 @@ function GaugeSvg({
   h: number;
   nx: number;
   ny: number;
-  arcMode: "single-gray" | "stt-tiered";
-  tSplitA?: number;
-  tSplitB?: number;
+  tGreenEnd: number;
+  tYellowEnd: number;
 }) {
   return (
     <svg
@@ -186,43 +146,30 @@ function GaugeSvg({
           <feDropShadow dx="0" dy="1" stdDeviation="1.2" floodOpacity="0.15" />
         </filter>
       </defs>
-      {arcMode === "single-gray" && (
-        <path
-          d={arcPath(0, 1)}
-          fill="none"
-          stroke="#cbd5e1"
-          strokeWidth={stroke}
-          strokeLinecap="round"
-        />
-      )}
-      {arcMode === "stt-tiered" && tSplitA != null && tSplitB != null && (
-        <>
-          <path
-            d={arcPath(0, tSplitA)}
-            fill="none"
-            stroke={TIER_COLOR.poor}
-            strokeWidth={stroke}
-            strokeLinecap="round"
-            opacity={0.9}
-          />
-          <path
-            d={arcPath(tSplitA, tSplitB)}
-            fill="none"
-            stroke={TIER_COLOR.medium}
-            strokeWidth={stroke}
-            strokeLinecap="round"
-            opacity={0.95}
-          />
-          <path
-            d={arcPath(tSplitB, 1)}
-            fill="none"
-            stroke={TIER_COLOR.excellent}
-            strokeWidth={stroke}
-            strokeLinecap="round"
-            opacity={0.95}
-          />
-        </>
-      )}
+      <path
+        d={arcPath(0, tGreenEnd)}
+        fill="none"
+        stroke={turingTierStroke("excellent")}
+        strokeWidth={stroke}
+        strokeLinecap="round"
+        opacity={0.95}
+      />
+      <path
+        d={arcPath(tGreenEnd, tYellowEnd)}
+        fill="none"
+        stroke={turingTierStroke("medium")}
+        strokeWidth={stroke}
+        strokeLinecap="round"
+        opacity={0.95}
+      />
+      <path
+        d={arcPath(tYellowEnd, 1)}
+        fill="none"
+        stroke={turingTierStroke("poor")}
+        strokeWidth={stroke}
+        strokeLinecap="round"
+        opacity={0.92}
+      />
       {[0, 0.2, 0.4, 0.6, 0.8, 1].map((t) => {
         const outer = polar(t);
         const innerR = r - stroke / 2 - 6;
@@ -236,7 +183,8 @@ function GaugeSvg({
             y1={iy}
             x2={outer.x}
             y2={outer.y}
-            stroke="#94a3b8"
+            stroke={TURING_PALETTE.secondary.slateBlue}
+            opacity={0.45}
             strokeWidth={1.5}
           />
         );
@@ -246,12 +194,12 @@ function GaugeSvg({
         y1={cy}
         x2={nx}
         y2={ny}
-        stroke="#334155"
+        stroke={TURING_PALETTE.accent}
         strokeWidth={2.5}
         strokeLinecap="round"
         filter={`url(#g-sh-${filterId})`}
       />
-      <circle cx={cx} cy={cy} r={5} fill="#334155" />
+      <circle cx={cx} cy={cy} r={5} fill={TURING_PALETTE.secondary.navy} />
     </svg>
   );
 }

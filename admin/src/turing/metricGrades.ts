@@ -45,11 +45,64 @@ export function tierHigherIsBetter(
   return "poor";
 }
 
-/** STT Velocity — 초 단위: 우수 < 5초, 보통 < 15초, 미흡 ≥ 15초 */
-export function gradeSttVelocitySeconds(sec: number): MetricTier {
-  if (sec < 5) return "excellent";
-  if (sec < 15) return "medium";
-  return "poor";
+/** 상단 Velocity 게이지·스펙 테이블과 동일 (값은 낮을수록 좋음) */
+export const VELOCITY_GAUGE = {
+  processing: {
+    vmax: 1.2,
+    excellentLt: 0.3,
+    mediumLt: 1.0,
+    caption: "우수 < 0.3 · 보통 < 1.0 · 미흡 ≥ 1.0",
+  },
+  stt: {
+    vmax: 0.6,
+    excellentLt: 0.2,
+    mediumLt: 0.5,
+    caption: "우수 < 0.2 · 보통 < 0.5 · 미흡 ≥ 0.5",
+  },
+  summarization: {
+    /** 시각화 스케일(0~1+). 임계값(0.1/0.3)과 무관 — 너무 작으면 값이 vmax를 넘을 때 바늘이 끝에 붙어 색 띠에 가려짐 */
+    vmax: 1.0,
+    excellentLt: 0.1,
+    mediumLt: 0.3,
+    caption: "우수 < 0.1 · 보통 < 0.3 · 미흡 ≥ 0.3",
+  },
+} as const;
+
+export type VelocityGaugeKind = keyof typeof VELOCITY_GAUGE;
+
+export function velocityGaugeTier(kind: VelocityGaugeKind, v: number): MetricTier {
+  const { excellentLt, mediumLt } = VELOCITY_GAUGE[kind];
+  return tierLowerIsBetter(v, excellentLt, mediumLt);
+}
+
+/** 반원 위 바늘 위치 t∈[0,1] — 값이 클수록 오른쪽(큰 t). 스펙은 여전히 낮을수록 우수 */
+export function velocityGaugeNeedleT(kind: VelocityGaugeKind, v: number): number {
+  const { vmax } = VELOCITY_GAUGE[kind];
+  return clamp(Math.min(v / vmax, 1), 0, 1);
+}
+
+/** 반원 색 구간 (좌→우: 우수·보통·미흡 — 값이 커질수록 오른쪽으로) */
+export function velocityGaugeArcSplits(kind: VelocityGaugeKind): {
+  tGreenEnd: number;
+  tYellowEnd: number;
+} {
+  const { vmax, excellentLt, mediumLt } = VELOCITY_GAUGE[kind];
+  return {
+    tGreenEnd: clamp(excellentLt / vmax, 0, 1),
+    tYellowEnd: clamp(mediumLt / vmax, 0, 1),
+  };
+}
+
+export function gradeProcessingVelocity(v: number): MetricTier {
+  return velocityGaugeTier("processing", v);
+}
+
+export function gradeSttVelocityRatio(v: number): MetricTier {
+  return velocityGaugeTier("stt", v);
+}
+
+export function gradeSummarizationVelocity(v: number): MetricTier {
+  return velocityGaugeTier("summarization", v);
 }
 
 export function gradeUer(v: number): MetricTier {
@@ -103,7 +156,7 @@ export function gradeSsa(v: number): MetricTier {
 
 /** STT 레이더 7축 (순서 고정) — 값은 uer 등 0~1, 0번만 초 */
 export function tiersForSttRadar(values: {
-  sttVelocitySec: number;
+  sttVelocityRatio: number;
   uer: number;
   piiProtection: number;
   mmr: number;
@@ -112,7 +165,7 @@ export function tiersForSttRadar(values: {
   redundancyRatio: number;
 }): MetricTier[] {
   return [
-    gradeSttVelocitySeconds(values.sttVelocitySec),
+    gradeSttVelocityRatio(values.sttVelocityRatio),
     gradeUer(values.uer),
     gradePiiProtection(values.piiProtection),
     gradeMmr(values.mmr),
@@ -147,7 +200,8 @@ export function tierToDotColor(t: MetricTier | "neutral"): string {
   return TIER_COLOR[t];
 }
 
-/** 차트 반지름용 0~1 정규화 — STT 속도: 짧을수록 좋음 → 짧을수록 바깥으로 */
-export function sttVelocitySecToRadius01(sec: number): number {
-  return clamp(1 - sec / 30, 0, 1);
+/** 차트 반지름용 — STT velocity 비율: 낮을수록 좋음 → 낮을수록 바깥으로 */
+export function sttVelocityRatioToRadius01(ratio: number): number {
+  const { vmax } = VELOCITY_GAUGE.stt;
+  return clamp(1 - ratio / vmax, 0, 1);
 }
