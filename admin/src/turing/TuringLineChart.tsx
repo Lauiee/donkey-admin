@@ -1,7 +1,7 @@
-import { useId } from "react";
+import { useId, useState } from "react";
 import { TURING_PALETTE } from "./turingPalette";
 
-type Point = { label: string; value: number };
+type Point = { label: string; value: number; tooltipLabel?: string };
 
 type Props = {
   title: string;
@@ -15,9 +15,10 @@ type Props = {
 export function TuringLineChart({
   title,
   series,
-  xAxisCaption = "건(순번)",
+  xAxisCaption = "",
 }: Props) {
   const gradId = useId().replace(/:/g, "");
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   /** 넓은 viewBox — 실제 표시는 컨테이너 가로 100%에 맞춤 */
   const w = 1000;
   const h = 236;
@@ -48,6 +49,13 @@ export function TuringLineChart({
 
   const yTicks = 4;
   const tickVals = Array.from({ length: yTicks + 1 }, (_, i) => minY + (yRange * i) / yTicks);
+  const hovered = hoveredIndex == null ? null : series[hoveredIndex];
+  const hx = hoveredIndex == null ? 0 : xAt(hoveredIndex);
+  const hy = hoveredIndex == null ? 0 : yAt(series[hoveredIndex].value);
+  const tipW = 180;
+  const tipH = 54;
+  const tipX = Math.min(w - pad.right - tipW, Math.max(pad.left, hx - tipW / 2));
+  const tipY = Math.max(8, hy - tipH - 12);
 
   return (
     <div className="admin-card flex min-h-[280px] flex-col overflow-hidden">
@@ -105,18 +113,86 @@ export function TuringLineChart({
             strokeLinejoin="round"
             strokeLinecap="round"
           />
+          {hovered ? (
+            <line
+              x1={hx}
+              y1={pad.top}
+              x2={hx}
+              y2={pad.top + innerH}
+              stroke={TURING_PALETTE.secondary.slateBlue}
+              strokeOpacity={0.25}
+              strokeWidth={1}
+              strokeDasharray="4 4"
+            />
+          ) : null}
 
           {series.map((p, i) => (
-            <circle
-              key={`dot-${i}`}
-              cx={xAt(i)}
-              cy={yAt(p.value)}
-              r={4}
-              fill={TURING_PALETTE.base.white}
-              stroke={TURING_PALETTE.accent}
-              strokeWidth={2}
-            />
+            <g key={`dot-${i}`}>
+              <circle
+                cx={xAt(i)}
+                cy={yAt(p.value)}
+                r={10}
+                fill="transparent"
+                onMouseEnter={() => setHoveredIndex(i)}
+                onMouseLeave={() =>
+                  setHoveredIndex((prev) => (prev === i ? null : prev))
+                }
+              />
+              <circle
+                cx={xAt(i)}
+                cy={yAt(p.value)}
+                r={hoveredIndex === i ? 6.5 : 5}
+                fill={TURING_PALETTE.base.white}
+                stroke={TURING_PALETTE.accent}
+                strokeWidth={hoveredIndex === i ? 2.8 : 2}
+                onMouseEnter={() => setHoveredIndex(i)}
+                onMouseLeave={() =>
+                  setHoveredIndex((prev) => (prev === i ? null : prev))
+                }
+              >
+                <title>{`${p.tooltipLabel ?? p.label}\nHealth Score: ${p.value}`}</title>
+              </circle>
+            </g>
           ))}
+          {hovered ? (
+            <g style={{ pointerEvents: "none" }}>
+              <rect
+                x={tipX}
+                y={tipY}
+                width={tipW}
+                height={tipH}
+                rx={12}
+                fill="#FFFFFF"
+                stroke="#D9E1EF"
+                strokeOpacity={0.95}
+                filter="drop-shadow(0px 8px 18px rgba(10,36,101,0.12))"
+              />
+              <text
+                x={tipX + 12}
+                y={tipY + 18}
+                fill={TURING_PALETTE.secondary.navy}
+                style={{ fontSize: 10, fontWeight: 600, letterSpacing: 0.3 }}
+              >
+                HEALTH SCORE
+              </text>
+              <text
+                x={tipX + 12}
+                y={tipY + 33}
+                fill={TURING_PALETTE.secondary.navy}
+                style={{ fontSize: 13, fontWeight: 700 }}
+              >
+                {String(hovered.value)}
+              </text>
+              <text
+                x={tipX + 12}
+                y={tipY + 47}
+                fill="#5D6F95"
+                style={{ fontSize: 10 }}
+              >
+                {hovered.tooltipLabel ?? hovered.label}
+              </text>
+            </g>
+          ) : null}
 
           {series.map((p, i) => (
             <text
@@ -130,16 +206,18 @@ export function TuringLineChart({
               {p.label}
             </text>
           ))}
-          <text
-            x={pad.left + innerW / 2}
-            y={h - 6}
-            textAnchor="middle"
-            fill={TURING_PALETTE.secondary.slateBlue}
-            style={{ fontSize: 10 }}
-            opacity={0.85}
-          >
-            {xAxisCaption}
-          </text>
+          {xAxisCaption ? (
+            <text
+              x={pad.left + innerW / 2}
+              y={h - 6}
+              textAnchor="middle"
+              fill={TURING_PALETTE.secondary.slateBlue}
+              style={{ fontSize: 10 }}
+              opacity={0.85}
+            >
+              {xAxisCaption}
+            </text>
+          ) : null}
         </svg>
       </div>
     </div>

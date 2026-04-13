@@ -71,9 +71,7 @@ const SAMP = {
   ssa: [0.77, 0.79, 0.78, 0.78, 0.77, 0.79, 0.78, 0.77, 0.79, 0.78],
 } as const;
 
-const PER_CASE_COMPOSITE_FALLBACK = [
-  0.44, 0.41, 0.48, 0.45, 0.43, 0.42, 0.46, 0.44, 0.43, 0.45,
-];
+const PER_CASE_COMPOSITE_FALLBACK = [63, 61, 66, 64, 62, 63, 67, 65, 64, 66];
 
 function buildFallbackDemo(): TuringDemoState {
   return {
@@ -229,6 +227,18 @@ function buildFallbackMetricTrendSeries(): MetricTrendSeriesGroup {
   };
 }
 
+function buildFallbackTrendTimeLabels(count: number): string[] {
+  const now = Date.now();
+  return Array.from({ length: count }, (_, i) => {
+    const d = new Date(now - (count - 1 - i) * 60 * 60 * 1000);
+    const MM = String(d.getMonth() + 1).padStart(2, "0");
+    const DD = String(d.getDate()).padStart(2, "0");
+    const HH = String(d.getHours()).padStart(2, "0");
+    const mm = String(d.getMinutes()).padStart(2, "0");
+    return `${MM}/${DD} ${HH}:${mm}`;
+  });
+}
+
 function SummarizationVelocitySlot({ value }: { value: number | null }) {
   if (value == null) {
     return (
@@ -300,6 +310,12 @@ export function TuringDashboardView({
   const [perCaseComposite, setPerCaseComposite] = useState<number[]>(
     () => PER_CASE_COMPOSITE_FALLBACK
   );
+  const [trendTimeLabels, setTrendTimeLabels] = useState<string[]>(
+    () => buildFallbackTrendTimeLabels(PER_CASE_COMPOSITE_FALLBACK.length)
+  );
+  const [trendTooltipLabels, setTrendTooltipLabels] = useState<string[]>(
+    () => buildFallbackTrendTimeLabels(PER_CASE_COMPOSITE_FALLBACK.length)
+  );
   const [sttMetricTrendSeries, setSttMetricTrendSeries] = useState<
     MetricTrendPoint[][]
   >(() => buildFallbackMetricTrendSeries().stt);
@@ -313,6 +329,11 @@ export function TuringDashboardView({
     if (!hasTuringApiKey()) {
       setDemo(buildFallbackDemo());
       setPerCaseComposite(PER_CASE_COMPOSITE_FALLBACK);
+      const fallbackTimes = buildFallbackTrendTimeLabels(
+        PER_CASE_COMPOSITE_FALLBACK.length
+      );
+      setTrendTimeLabels(fallbackTimes);
+      setTrendTooltipLabels(fallbackTimes.map((x) => `Fallback ${x}`));
       const fallback = buildFallbackMetricTrendSeries();
       setSttMetricTrendSeries(fallback.stt);
       setSummaryMetricTrendSeries(fallback.summary);
@@ -333,6 +354,11 @@ export function TuringDashboardView({
           setError("조회된 채점 결과가 없습니다.");
           setDemo(buildFallbackDemo());
           setPerCaseComposite(PER_CASE_COMPOSITE_FALLBACK);
+          const fallbackTimes = buildFallbackTrendTimeLabels(
+            PER_CASE_COMPOSITE_FALLBACK.length
+          );
+          setTrendTimeLabels(fallbackTimes);
+          setTrendTooltipLabels(fallbackTimes.map((x) => `Fallback ${x}`));
           const fallback = buildFallbackMetricTrendSeries();
           setSttMetricTrendSeries(fallback.stt);
           setSummaryMetricTrendSeries(fallback.summary);
@@ -341,6 +367,14 @@ export function TuringDashboardView({
         const agg = aggregateEvaluationItems(res.items);
         setDemo(agg.demo);
         setPerCaseComposite(agg.perCaseComposite);
+        const sorted = [...res.items].sort(
+          (a, b) =>
+            new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+        );
+        const labels = sorted.map((x) => formatTrendTimeLabel(x.created_at).short);
+        const tips = sorted.map((x) => formatTrendTimeLabel(x.created_at).full);
+        setTrendTimeLabels(labels);
+        setTrendTooltipLabels(tips);
         const trendSeries = buildMetricTrendSeriesFromItems(res.items);
         setSttMetricTrendSeries(trendSeries.stt);
         setSummaryMetricTrendSeries(trendSeries.summary);
@@ -349,6 +383,11 @@ export function TuringDashboardView({
           setError(e instanceof Error ? e.message : "불러오기 실패");
           setDemo(buildFallbackDemo());
           setPerCaseComposite(PER_CASE_COMPOSITE_FALLBACK);
+          const fallbackTimes = buildFallbackTrendTimeLabels(
+            PER_CASE_COMPOSITE_FALLBACK.length
+          );
+          setTrendTimeLabels(fallbackTimes);
+          setTrendTooltipLabels(fallbackTimes.map((x) => `Fallback ${x}`));
           const fallback = buildFallbackMetricTrendSeries();
           setSttMetricTrendSeries(fallback.stt);
           setSummaryMetricTrendSeries(fallback.summary);
@@ -365,10 +404,11 @@ export function TuringDashboardView({
   const trendByCase = useMemo(
     () =>
       perCaseComposite.map((value, i) => ({
-        label: `${i + 1}`,
+        label: trendTimeLabels[i] ?? `${i + 1}`,
+        tooltipLabel: trendTooltipLabels[i],
         value,
       })),
-    [perCaseComposite]
+    [perCaseComposite, trendTimeLabels, trendTooltipLabels]
   );
 
   const sttTiers = tiersForSttRadar({
@@ -551,7 +591,7 @@ export function TuringDashboardView({
       <section className="mt-10">
         <TuringSectionTitle title="Trend" />
         <TuringLineChart
-          title="Overall Quality (per request)"
+          title="Health Score Trend"
           series={trendByCase}
         />
       </section>

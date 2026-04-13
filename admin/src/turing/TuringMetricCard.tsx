@@ -188,55 +188,77 @@ function InlineMetricTrendChart({
           />
         ) : null}
         {series.map((p, i) => (
-          <circle
-            key={`${p.label}-${i}`}
-            cx={xAt(i)}
-            cy={yAt(p.value)}
-            r={hoveredIndex === i ? 4.5 : 3}
-            fill={TURING_PALETTE.base.white}
-            stroke={TURING_PALETTE.accent}
-            strokeWidth={hoveredIndex === i ? 2.4 : 1.5}
-            onMouseEnter={() => setHoveredIndex(i)}
-            onMouseLeave={() => setHoveredIndex((prev) => (prev === i ? null : prev))}
-          >
-            <title>
-              {`${p.tooltipLabel ?? p.label}\n값: ${
-                isPercentScale ? `${(p.value * 100).toFixed(1)}%` : p.value.toFixed(4)
-              }`}
-            </title>
-          </circle>
+          <g key={`${p.label}-${i}`}>
+            <circle
+              cx={xAt(i)}
+              cy={yAt(p.value)}
+              r={11}
+              fill="transparent"
+              onMouseEnter={() => setHoveredIndex(i)}
+              onMouseLeave={() =>
+                setHoveredIndex((prev) => (prev === i ? null : prev))
+              }
+            />
+            <circle
+              cx={xAt(i)}
+              cy={yAt(p.value)}
+              r={hoveredIndex === i ? 6 : 4.5}
+              fill={TURING_PALETTE.base.white}
+              stroke={TURING_PALETTE.accent}
+              strokeWidth={hoveredIndex === i ? 2.8 : 2}
+              onMouseEnter={() => setHoveredIndex(i)}
+              onMouseLeave={() =>
+                setHoveredIndex((prev) => (prev === i ? null : prev))
+              }
+            >
+              <title>
+                {`${p.tooltipLabel ?? p.label}\n값: ${
+                  isPercentScale ? `${(p.value * 100).toFixed(1)}%` : p.value.toFixed(4)
+                }`}
+              </title>
+            </circle>
+          </g>
         ))}
         {hovered ? (
-          <g>
+          <g style={{ pointerEvents: "none" }}>
             <rect
               x={tipX}
               y={tipY}
               width={tipW}
               height={tipH}
-              rx={8}
-              fill={TURING_PALETTE.base.white}
-              stroke={TURING_PALETTE.secondary.slateBlue}
-              strokeOpacity={0.25}
+              rx={10}
+              fill="#FFFFFF"
+              stroke="#D9E1EF"
+              strokeOpacity={0.95}
+              filter="drop-shadow(0px 7px 16px rgba(10,36,101,0.12))"
             />
             <text
               x={tipX + 10}
-              y={tipY + 18}
+              y={tipY + 16}
               fill={TURING_PALETTE.secondary.navy}
-              style={{ fontSize: 10, fontWeight: 600 }}
+              style={{ fontSize: 9.5, fontWeight: 600, letterSpacing: 0.25 }}
             >
-              {hovered.tooltipLabel ?? hovered.label}
+              VALUE
             </text>
             <text
               x={tipX + 10}
-              y={tipY + 36}
-              fill={TURING_PALETTE.secondary.slateBlue}
-              style={{ fontSize: 10 }}
+              y={tipY + 32}
+              fill={TURING_PALETTE.secondary.navy}
+              style={{ fontSize: 12.5, fontWeight: 700 }}
             >
-              {`값: ${
+              {`${
                 isPercentScale
                   ? `${(hovered.value * 100).toFixed(1)}%`
                   : hovered.value.toFixed(4)
               }`}
+            </text>
+            <text
+              x={tipX + 10}
+              y={tipY + 46}
+              fill="#5D6F95"
+              style={{ fontSize: 9.5 }}
+            >
+              {hovered.tooltipLabel ?? hovered.label}
             </text>
           </g>
         ) : null}
