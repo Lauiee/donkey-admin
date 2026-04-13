@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { setRole, setToken } from "../auth";
+import { getRole, isDevAuthBypass, setRole, setToken } from "../auth";
 import { getMe, login } from "../api";
 
 export function Login() {
@@ -9,6 +9,12 @@ export function Login() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!isDevAuthBypass()) return;
+    const role = getRole();
+    navigate(role === "admin" ? "/inquiry" : "/dashboard", { replace: true });
+  }, [navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,7 +45,7 @@ export function Login() {
   return (
     <div className="min-h-screen bg-neutral-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md admin-card p-8 shadow-lg">
-        <h1 className="admin-page-title mb-1">NBrief 관리자</h1>
+        <h1 className="admin-page-title mb-1">DONKEY 관리자</h1>
         <p className="text-sm text-slate-500 mb-8">로그인하여 계속하세요.</p>
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>

@@ -6,6 +6,7 @@ import {
   clearToken,
   getRole,
   getToken,
+  isDevAuthBypass,
   setRole,
   setToken,
   getTokenExpiresAtMs,
@@ -116,8 +117,7 @@ const navItems: {
   },
   {
     to: "/turing",
-    label: "튜링",
-    disabled: true,
+    label: "Turing",
     icon: (
       <svg
         className="w-5 h-5 shrink-0"
@@ -157,6 +157,7 @@ export function AdminLayout() {
 
   useEffect(() => {
     if (role) return;
+    if (isDevAuthBypass()) return;
     getMe()
       .then((me) => {
         const r: UserRole = me.role === "admin" ? "admin" : "client";
@@ -170,6 +171,7 @@ export function AdminLayout() {
   }, [role, navigate]);
 
   const handleExtend = async () => {
+    if (isDevAuthBypass()) return;
     setExtending(true);
     try {
       const { access_token } = await refreshSession();
@@ -216,7 +218,7 @@ export function AdminLayout() {
       <aside className="w-60 h-screen bg-white border-r border-slate-200 flex flex-col shrink-0 shadow-sm overflow-y-auto">
         <div className="h-14 px-4 flex items-center border-b border-slate-100">
           <span className="font-semibold text-slate-800 tracking-tight">
-            NBrief
+            DONKEY
           </span>
         </div>
         <nav className="p-3 flex flex-col gap-0.5 flex-1">
@@ -228,10 +230,7 @@ export function AdminLayout() {
                 item.to === "/turing"
             )
             .filter(
-              (item) =>
-                !item.disabled ||
-                item.to === "/turing" ||
-                item.to === "/billing"
+              (item) => !item.disabled || item.to === "/billing"
             )
             .map(({ to, label, icon, disabled }) =>
               disabled ? (

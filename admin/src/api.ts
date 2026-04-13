@@ -2,13 +2,13 @@ import { getToken } from "./auth";
 
 /**
  * API 베이스 URL.
- * - 개발: /api (Vite 프록시 → localhost:8000)
- * - 프로덕션(분리 배포): VITE_API_BASE (예: https://api.example.com)
- * - 프로덕션(같은 오리진): 비우면 상대 경로
+ * - VITE_API_BASE가 있으면 개발/프로덕션 모두 해당 절대 URL (예: https://donkey.ai.kr)
+ * - 개발에서 비어 있으면 /api (Vite 프록시 → localhost:8000)
+ * - 프로덕션에서 비어 있으면 상대 경로(같은 오리진)
  */
-const API_BASE = import.meta.env.DEV
-  ? "/api"
-  : (import.meta.env.VITE_API_BASE as string | undefined) ?? "";
+const rawBase =
+  (import.meta.env.VITE_API_BASE as string | undefined)?.trim() ?? "";
+const API_BASE = rawBase || (import.meta.env.DEV ? "/api" : "");
 
 function getHeaders(includeAuth = true): HeadersInit {
   const headers: Record<string, string> = {

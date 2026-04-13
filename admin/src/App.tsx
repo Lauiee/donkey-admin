@@ -9,6 +9,7 @@ import { HistoryDetail } from "./pages/HistoryDetail";
 import { Inquiry } from "./pages/Inquiry";
 import { InquiryDetail } from "./pages/InquiryDetail";
 import { Login } from "./pages/Login";
+import { Turing } from "./pages/Turing";
 import { Usage } from "./pages/Usage";
 
 function IndexRedirect() {
@@ -72,6 +73,7 @@ function App() {
           />
           <Route path="inquiry" element={<Inquiry />} />
           <Route path="inquiry/:id" element={<InquiryDetail />} />
+          <Route path="turing" element={<Turing />} />
         </Route>
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

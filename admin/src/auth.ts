@@ -1,11 +1,12 @@
-const TOKEN_KEY = "nbrief_admin_token";
-const ROLE_KEY = "nbrief_admin_role";
+const TOKEN_KEY = "donkey_admin_token";
+const ROLE_KEY = "donkey_admin_role";
 
 export type UserRole = "client" | "admin";
 
 export function getRole(): UserRole | null {
   const r = localStorage.getItem(ROLE_KEY);
   if (r === "client" || r === "admin") return r;
+  if (isDevAuthBypass()) return devPreviewRole();
   return null;
 }
 
@@ -45,6 +46,20 @@ export function clearToken(): void {
   clearRole();
 }
 
+/** 로컬에서 레이아웃만 볼 때 (백엔드·로그인 없이). 프로덕션 빌드에서는 무시됨. */
+export function isDevAuthBypass(): boolean {
+  return (
+    import.meta.env.DEV && import.meta.env.VITE_DEV_PREVIEW === "true"
+  );
+}
+
+function devPreviewRole(): UserRole {
+  return import.meta.env.VITE_DEV_PREVIEW_ROLE === "admin"
+    ? "admin"
+    : "client";
+}
+
 export function isLoggedIn(): boolean {
+  if (isDevAuthBypass()) return true;
   return !!getToken();
 }
