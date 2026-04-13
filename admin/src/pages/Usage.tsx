@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
+import { PageHeader } from "../components/PageHeader";
 import { ProjectSelect } from "../components/ProjectSelect";
 import {
   getProjects,
@@ -79,60 +80,57 @@ export function Usage() {
 
   return (
     <div>
-      <h2 className="admin-page-title mb-2">사용량</h2>
-      <p className="text-sm text-slate-500 mb-6">
-        기간을 선택해 일별 사용량을 확인하세요.
-      </p>
+      <PageHeader
+        title="사용량"
+        subtitle="기간을 선택해 일별 사용량과 예상 비용을 확인하세요."
+        actions={
+          projects.length > 0 ? (
+            <ProjectSelect
+              value={selectedProject}
+              onChange={handleProjectChange}
+              projects={projects}
+              placeholder="전체 프로젝트"
+              className="shrink-0"
+            />
+          ) : null
+        }
+      />
 
-      {/* 기간 선택 */}
-      <div className="admin-card p-5 mb-8">
-        <h3 className="font-medium text-slate-800 mb-3">기간 조회</h3>
+      <div className="admin-toolbar">
+        <h3 className="admin-section-title mb-4">기간 조회</h3>
         <div className="flex flex-wrap items-end gap-4">
-          {projects.length > 0 && (
-            <div className="flex flex-col">
-              <label className="block text-xs font-medium text-slate-500 mb-1.5">
-                프로젝트
-              </label>
-              <ProjectSelect
-                value={selectedProject}
-                onChange={handleProjectChange}
-                projects={projects}
-                placeholder="전체"
-              />
-            </div>
-          )}
           <div>
-            <label className="block text-xs font-medium text-slate-500 mb-1">
+            <label className="block text-xs font-medium text-brand-slate mb-1">
               시작일
             </label>
             <input
               type="date"
               value={from}
               onChange={(e) => setFrom(e.target.value)}
-              className="px-3 py-2 rounded-lg border border-slate-200 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              className="px-3 py-2 rounded-lg border border-brand-line text-sm text-brand-ink focus:outline-none focus:ring-2 focus:ring-brand-accent focus:border-transparent"
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-500 mb-1">
+            <label className="block text-xs font-medium text-brand-slate mb-1">
               종료일
             </label>
             <input
               type="date"
               value={to}
               onChange={(e) => setTo(e.target.value)}
-              className="px-3 py-2 rounded-lg border border-slate-200 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              className="px-3 py-2 rounded-lg border border-brand-line text-sm text-brand-ink focus:outline-none focus:ring-2 focus:ring-brand-accent focus:border-transparent"
             />
           </div>
           <button
             type="button"
             onClick={handleQuery}
             disabled={loading}
-            className="px-4 py-2 rounded-lg text-sm font-medium bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 disabled:pointer-events-none"
+            className="admin-btn-primary shrink-0"
           >
             {loading ? "조회 중…" : "조회"}
           </button>
         </div>
-        <p className="text-xs text-slate-400 mt-2">
+        <p className="text-xs text-brand-mint mt-2">
           최대 90일까지 조회 가능합니다.
         </p>
       </div>
@@ -142,30 +140,30 @@ export function Usage() {
       {!error && stats && (
         <>
           {/* 선택 기간 요약 */}
-          <div className="admin-card p-5 mb-8">
-            <h3 className="font-medium text-slate-800 mb-3">선택 기간 요약</h3>
+          <div className="admin-card p-5 sm:p-6 mb-8">
+            <h3 className="admin-section-title mb-4">선택 기간 요약</h3>
             <div className="flex flex-wrap gap-6 text-sm mb-4">
-              <span className="text-slate-600">
+              <span className="text-brand-slate">
                 총 요청{" "}
-                <strong className="text-slate-900">{stats.total_count}</strong>
+                <strong className="text-brand-ink">{stats.total_count}</strong>
                 건
               </span>
-              <span className="text-slate-600">
+              <span className="text-brand-slate">
                 완료{" "}
-                <strong className="text-slate-900">
+                <strong className="text-brand-ink">
                   {stats.completed_count}
                 </strong>
                 건
               </span>
-              <span className="text-slate-600">
+              <span className="text-brand-slate">
                 오류{" "}
-                <strong className="text-slate-900">{stats.error_count}</strong>
+                <strong className="text-brand-ink">{stats.error_count}</strong>
                 건
               </span>
               {stats.avg_processing_sec != null && (
-                <span className="text-slate-600">
+                <span className="text-brand-slate">
                   평균 처리{" "}
-                  <strong className="text-slate-900">
+                  <strong className="text-brand-ink">
                     {stats.avg_processing_sec}초
                   </strong>
                 </span>
@@ -177,25 +175,25 @@ export function Usage() {
                 const hasNegotiation =
                   stats.total_count >= 250_001 || usageCost < 0;
                 return (
-                  <div className="pt-4 border-t border-slate-100">
-                    <p className="text-sm text-slate-600">
+                  <div className="pt-4 border-t border-brand-line/70">
+                    <p className="text-sm text-brand-slate">
                       이 기간 사용량 기준 예상 API 사용료:{" "}
                       {hasNegotiation ? (
                         <span className="text-amber-600 font-medium">
                           250,001건 이상으로 협의 필요
                         </span>
                       ) : (
-                        <strong className="text-indigo-600">
+                        <strong className="text-brand-navy">
                           {formatWon(usageCost)}
                         </strong>
                       )}
-                      <span className="text-slate-400 ml-1.5 text-xs">
+                      <span className="text-brand-mint ml-1.5 text-xs">
                         (참고 · 실제 청구는 당월 누적 기준)
                       </span>
                     </p>
                     <Link
                       to="/billing"
-                      className="inline-block mt-2 text-xs text-indigo-600 hover:text-indigo-700 font-medium"
+                      className="inline-block mt-2 text-xs text-brand-navy hover:text-brand-ink font-medium"
                     >
                       당월 예상 부과 금액 보기 →
                     </Link>
@@ -206,13 +204,13 @@ export function Usage() {
 
           {/* 일별 사용량 */}
           <div className="admin-card overflow-hidden">
-            <h3 className="font-medium text-slate-800 mb-3 px-5 pt-5">
+            <h3 className="font-medium text-brand-ink mb-3 px-5 pt-5">
               일별 사용량
             </h3>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="bg-slate-50 text-left text-slate-600">
+                  <tr className="bg-brand-surface text-left text-brand-slate">
                     <th className="px-5 py-3 font-medium">날짜</th>
                     <th className="px-5 py-3 font-medium">요청 건수</th>
                   </tr>
@@ -222,7 +220,7 @@ export function Usage() {
                     <tr>
                       <td
                         colSpan={2}
-                        className="px-5 py-8 text-center text-slate-500"
+                        className="px-5 py-8 text-center text-brand-slate"
                       >
                         데이터 없음
                       </td>
@@ -231,10 +229,10 @@ export function Usage() {
                     [...dailyCounts].reverse().map((d) => (
                       <tr
                         key={d.date}
-                        className="border-t border-slate-100 hover:bg-slate-50/50"
+                        className="border-t border-brand-line/70 hover:bg-brand-surface/80"
                       >
-                        <td className="px-5 py-3 text-slate-700">{d.date}</td>
-                        <td className="px-5 py-3 font-medium text-slate-800">
+                        <td className="px-5 py-3 text-brand-navy">{d.date}</td>
+                        <td className="px-5 py-3 font-medium text-brand-ink">
                           {d.count}건
                         </td>
                       </tr>
@@ -248,7 +246,7 @@ export function Usage() {
       )}
 
       {loading && !stats && (
-        <div className="admin-card p-8 text-slate-500">불러오는 중...</div>
+        <div className="admin-card p-8 text-brand-slate">불러오는 중...</div>
       )}
     </div>
   );

@@ -43,15 +43,15 @@ export function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-neutral-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-md admin-card p-8 shadow-lg">
+    <div className="min-h-screen bg-brand-canvas flex items-center justify-center p-4">
+      <div className="w-full max-w-md admin-card p-8">
         <h1 className="admin-page-title mb-1">DONKEY 관리자</h1>
-        <p className="text-sm text-slate-500 mb-8">로그인하여 계속하세요.</p>
+        <p className="text-sm text-brand-slate mb-8">로그인하여 계속하세요.</p>
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
             <label
               htmlFor="user_id"
-              className="block text-sm font-medium text-slate-700 mb-1.5"
+              className="block text-sm font-medium text-brand-navy mb-1.5"
             >
               아이디
             </label>
@@ -61,14 +61,14 @@ export function Login() {
               value={userId}
               onChange={(e) => setUserId(e.target.value)}
               autoComplete="username"
-              className="w-full px-3.5 py-2.5 border border-slate-200 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-shadow"
+              className="admin-input"
               required
             />
           </div>
           <div>
             <label
               htmlFor="password"
-              className="block text-sm font-medium text-slate-700 mb-1.5"
+              className="block text-sm font-medium text-brand-navy mb-1.5"
             >
               비밀번호
             </label>
@@ -78,19 +78,19 @@ export function Login() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               autoComplete="current-password"
-              className="w-full px-3.5 py-2.5 border border-slate-200 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-shadow"
+              className="admin-input"
               required
             />
           </div>
           {error && (
-            <p className="text-sm text-red-600 bg-red-50 border border-red-100 px-3.5 py-2.5 rounded-lg">
+            <p className="text-sm text-red-700 bg-red-50 border border-red-100/80 px-3.5 py-2.5 rounded-xl">
               {error}
             </p>
           )}
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-2.5 px-4 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 transition-colors"
+            className="admin-btn-primary w-full"
           >
             {loading ? "로그인 중..." : "로그인"}
           </button>

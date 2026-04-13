@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
+import { PageHeader } from "../components/PageHeader";
 import { getUsage } from "../api";
 import {
   SUBSCRIPTION_MONTHLY,
@@ -52,43 +53,43 @@ export function Billing() {
 
   return (
     <div>
-      <h2 className="admin-page-title mb-2">비용</h2>
-      <p className="text-sm text-slate-500 mb-8">
-        월 구독료와 API 사용량에 따른 요금 정보입니다.
-      </p>
+      <PageHeader
+        title="비용"
+        subtitle="월 구독료와 API 사용량에 따른 요금 정보를 확인하세요."
+      />
 
       {/* 당월 예상 부과 금액 */}
-      <div className="admin-card p-6 mb-8 max-w-3xl border-l-4 border-l-indigo-500 bg-indigo-50/30">
-        <h3 className="font-semibold text-slate-800 mb-1">
+      <div className="admin-card p-6 mb-8 max-w-3xl border-l-4 border-l-brand-navy bg-brand-accent/10">
+        <h3 className="font-semibold text-brand-ink mb-1">
           당월 예상 부과 금액
         </h3>
-        <p className="text-sm text-slate-500 mb-4">
+        <p className="text-sm text-brand-slate mb-4">
           {new Date().getMonth() + 1}월 현재 누적 사용량 기준 (실제 청구는 익월
           초)
         </p>
         {monthLoading ? (
-          <p className="text-slate-500">불러오는 중...</p>
+          <p className="text-brand-slate">불러오는 중...</p>
         ) : monthEstimate && !monthEstimate.hasNegotiation ? (
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
-              <span className="text-slate-600">월 구독료</span>
+              <span className="text-brand-slate">월 구독료</span>
               <span className="font-medium">
                 {formatWon(SUBSCRIPTION_MONTHLY)}
               </span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-slate-600">
+              <span className="text-brand-slate">
                 API 사용 요금 ({(monthUsage ?? 0).toLocaleString()}건)
               </span>
               <span className="font-medium">
                 {formatWon(monthEstimate.usageCost)}
               </span>
             </div>
-            <div className="flex justify-between text-base pt-3 border-t border-slate-200">
-              <span className="font-semibold text-slate-800">
+            <div className="flex justify-between text-base pt-3 border-t border-brand-line">
+              <span className="font-semibold text-brand-ink">
                 예상 부과 금액 (VAT 포함)
               </span>
-              <span className="font-bold text-indigo-600 text-lg">
+              <span className="font-bold text-brand-navy text-lg">
                 {formatWon(monthEstimate.totalWithVat)}
               </span>
             </div>
@@ -99,7 +100,7 @@ export function Billing() {
             주세요.
           </p>
         ) : (
-          <p className="text-slate-500">
+          <p className="text-brand-slate">
             사용량 데이터가 없습니다. 당월 사용 후 표시됩니다.
           </p>
         )}
@@ -107,24 +108,24 @@ export function Billing() {
 
       {/* 요약 카드 */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10 max-w-3xl">
-        <div className="admin-card p-6 border-l-4 border-l-indigo-500">
-          <p className="text-sm font-medium text-slate-500 mb-1">월 구독료</p>
-          <p className="text-3xl font-bold text-slate-900">
+        <div className="admin-card p-6 border-l-4 border-l-brand-navy">
+          <p className="text-sm font-medium text-brand-slate mb-1">월 구독료</p>
+          <p className="text-3xl font-bold text-brand-ink">
             {formatWon(SUBSCRIPTION_MONTHLY)}
-            <span className="text-base font-normal text-slate-500 ml-1.5">
+            <span className="text-base font-normal text-brand-slate ml-1.5">
               /월
             </span>
           </p>
-          <p className="text-xs text-slate-400 mt-2">VAT 별도</p>
+          <p className="text-xs text-brand-mint mt-2">VAT 별도</p>
         </div>
-        <div className="admin-card p-6 border-l-4 border-l-emerald-500">
-          <p className="text-sm font-medium text-slate-500 mb-1">
+        <div className="admin-card p-6 border-l-4 border-l-brand-accent">
+          <p className="text-sm font-medium text-brand-slate mb-1">
             API 사용 요금
           </p>
-          <p className="text-lg font-semibold text-slate-700">
+          <p className="text-lg font-semibold text-brand-navy">
             구간별 과금 (아래 표 참조)
           </p>
-          <p className="text-xs text-slate-400 mt-2">
+          <p className="text-xs text-brand-mint mt-2">
             0~5,000건 무료 · 250,001건 이상 협의
           </p>
         </div>
@@ -132,20 +133,20 @@ export function Billing() {
 
       {/* 사용량 구간 테이블 */}
       <div className="admin-card overflow-hidden mb-10 max-w-3xl">
-        <div className="px-6 py-4 border-b border-slate-100">
-          <h3 className="font-semibold text-slate-800">
+        <div className="px-6 py-4 border-b border-brand-line/70">
+          <h3 className="font-semibold text-brand-ink">
             월간 API 사용량 구간별 요금
           </h3>
-          <p className="text-sm text-slate-500 mt-0.5">당월 누적 사용량 기준</p>
+          <p className="text-sm text-brand-slate mt-0.5">당월 누적 사용량 기준</p>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="bg-slate-50 text-left">
-                <th className="px-6 py-3 font-medium text-slate-600">
+              <tr className="bg-brand-surface text-left">
+                <th className="px-6 py-3 font-medium text-brand-slate">
                   사용량 구간
                 </th>
-                <th className="px-6 py-3 font-medium text-slate-600 text-right">
+                <th className="px-6 py-3 font-medium text-brand-slate text-right">
                   건당 요금
                 </th>
               </tr>
@@ -154,9 +155,9 @@ export function Billing() {
               {USAGE_TIERS.map((tier, i) => (
                 <tr
                   key={i}
-                  className="border-t border-slate-100 hover:bg-slate-50/50"
+                  className="border-t border-brand-line/70 hover:bg-brand-surface/80"
                 >
-                  <td className="px-6 py-4 text-slate-700 font-medium">
+                  <td className="px-6 py-4 text-brand-navy font-medium">
                     {tier.label}
                   </td>
                   <td className="px-6 py-4 text-right">
@@ -165,9 +166,11 @@ export function Billing() {
                         협의 필요
                       </span>
                     ) : tier.pricePerCall === 0 ? (
-                      <span className="text-emerald-600 font-medium">무료</span>
+                      <span className="text-brand-accentDark font-semibold">
+                        무료
+                      </span>
                     ) : (
-                      <span className="text-slate-800 font-semibold">
+                      <span className="text-brand-ink font-semibold">
                         {formatWon(tier.pricePerCall)}/건
                       </span>
                     )}
@@ -181,13 +184,13 @@ export function Billing() {
 
       {/* 비용 계산기 */}
       <div className="admin-card p-6 mb-8 max-w-3xl">
-        <h3 className="font-semibold text-slate-800 mb-1">예상 비용 계산</h3>
-        <p className="text-sm text-slate-500 mb-6">
+        <h3 className="font-semibold text-brand-ink mb-1">예상 비용 계산</h3>
+        <p className="text-sm text-brand-slate mb-6">
           예상 월 사용량을 입력하면 대략적인 비용을 확인할 수 있습니다.
         </p>
         <div className="flex flex-wrap items-end gap-4">
           <div>
-            <label className="block text-xs font-medium text-slate-500 mb-1.5">
+            <label className="block text-xs font-medium text-brand-slate mb-1.5">
               월 예상 사용량 (건)
             </label>
             <input
@@ -198,12 +201,12 @@ export function Billing() {
                 setInputCalls(e.target.value.replace(/[^\d]/g, ""))
               }
               placeholder="10000"
-              className="w-48 px-4 py-2.5 rounded-lg border border-slate-200 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              className="w-48 px-4 py-2.5 rounded-lg border border-brand-line text-brand-ink placeholder:text-brand-mint focus:outline-none focus:ring-2 focus:ring-brand-accent focus:border-transparent"
             />
           </div>
         </div>
         {inputEstimate && (
-          <div className="mt-6 pt-6 border-t border-slate-100 space-y-2">
+          <div className="mt-6 pt-6 border-t border-brand-line/70 space-y-2">
             {inputEstimate.hasNegotiation ? (
               <p className="text-amber-700 font-medium">
                 250,001건 이상의 사용량은 별도 협의가 필요합니다. 담당자에게
@@ -212,36 +215,36 @@ export function Billing() {
             ) : (
               <>
                 <div className="flex justify-between text-sm">
-                  <span className="text-slate-600">월 구독료</span>
-                  <span className="font-medium text-slate-800">
+                  <span className="text-brand-slate">월 구독료</span>
+                  <span className="font-medium text-brand-ink">
                     {formatWon(SUBSCRIPTION_MONTHLY)}
                   </span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-slate-600">
+                  <span className="text-brand-slate">
                     API 사용 요금 ({usageNum.toLocaleString()}건)
                   </span>
-                  <span className="font-medium text-slate-800">
+                  <span className="font-medium text-brand-ink">
                     {formatWon(inputEstimate.usageCost)}
                   </span>
                 </div>
                 <div className="flex justify-between text-sm pt-2">
-                  <span className="text-slate-600">소계 (VAT 별도)</span>
-                  <span className="font-semibold text-slate-900">
+                  <span className="text-brand-slate">소계 (VAT 별도)</span>
+                  <span className="font-semibold text-brand-ink">
                     {formatWon(inputEstimate.totalBeforeVat)}
                   </span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-slate-600">VAT (10%)</span>
-                  <span className="font-medium text-slate-700">
+                  <span className="text-brand-slate">VAT (10%)</span>
+                  <span className="font-medium text-brand-navy">
                     {formatWon(inputEstimate.vatAmount)}
                   </span>
                 </div>
-                <div className="flex justify-between text-base pt-3 border-t border-slate-200">
-                  <span className="font-semibold text-slate-800">
+                <div className="flex justify-between text-base pt-3 border-t border-brand-line">
+                  <span className="font-semibold text-brand-ink">
                     예상 월 결제 금액
                   </span>
-                  <span className="font-bold text-indigo-600">
+                  <span className="font-bold text-brand-navy">
                     {formatWon(inputEstimate.totalWithVat)}
                   </span>
                 </div>
@@ -252,9 +255,9 @@ export function Billing() {
       </div>
 
       {/* 안내 문구 */}
-      <div className="admin-card p-6 max-w-3xl bg-slate-50/80 border-slate-200">
-        <h4 className="font-medium text-slate-700 mb-2">안내 사항</h4>
-        <ul className="text-sm text-slate-600 space-y-1.5 list-disc list-inside">
+      <div className="admin-card p-6 max-w-3xl bg-brand-surface/90 border-brand-line">
+        <h4 className="font-medium text-brand-navy mb-2">안내 사항</h4>
+        <ul className="text-sm text-brand-slate space-y-1.5 list-disc list-inside">
           <li>월 구독료 80만원은 VAT 별도입니다.</li>
           <li>API 사용량은 월 단위로 집계되며, 다음 달 초에 청구됩니다.</li>
           <li>

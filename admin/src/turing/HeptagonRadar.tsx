@@ -1,7 +1,12 @@
-import { useId } from "react";
-import type { MetricTier } from "./metricGrades";
+import { useId, useRef, useState } from "react";
+import { type MetricTier } from "./metricGrades";
 import { TierBadge } from "./TierBadge";
+import {
+  DescriptionTooltipPortal,
+  TuringHoverDescription,
+} from "./TuringHoverDescription";
 import { TURING_PALETTE, turingTierDotFill } from "./turingPalette";
+import { formatMetricValue } from "./turingFormat";
 
 type Props = {
   title: string;
@@ -14,10 +19,12 @@ type Props = {
   chartRadii?: (number | null)[];
   chartLabels: readonly string[];
   listLabels: readonly string[];
-  /** 각 꼭지 등급 — 속도만 표시 축은 neutral */
+  /** listLabels 와 동일 길이 — 호버 시 지표 설명 (브라우저 툴팁) */
+  metricDescriptions?: readonly string[];
+  /** 각 꼭지 등급 — 값 미지원(null) 축만 neutral */
   tiers: Array<MetricTier | "neutral">;
-  /** 하단 수치 표시 — 초 또는 % */
-  rowFormats?: Array<"percent" | "seconds">;
+  /** 하단 수치 표시 — 초, 원시 %, 또는 Velocity용 (100 − 원시%) 점수 */
+  rowFormats?: Array<"percent" | "seconds" | "invertedPercent">;
   /** rowFormats 가 seconds 일 때의 원시 초 값 (STT 속도 축 등) */
   secondsValues?: Array<number | undefined>;
 };
@@ -33,31 +40,21 @@ function angleAt(i: number): number {
   return -Math.PI / 2 + (2 * Math.PI * i) / N;
 }
 
-function formatPercent(v: number): string {
-  return `${Math.round(clamp01(v) * 1000) / 10}%`;
-}
-
-function NeutralBadge() {
-  return (
-    <span
-      className="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1 shrink-0 bg-[#7B8DB8]/15 text-[#5B6B95] ring-[#7B8DB8]/35"
-    >
-      속도만
-    </span>
-  );
-}
-
 export function HeptagonRadar({
   title,
   values,
   chartRadii,
   chartLabels,
   listLabels,
+  metricDescriptions,
   tiers,
   rowFormats,
   secondsValues,
 }: Props) {
   const gradId = useId().replace(/:/g, "");
+  const radarAnchorRef = useRef<SVGGElement | null>(null);
+  const [radarTipOpen, setRadarTipOpen] = useState(false);
+  const [radarTipText, setRadarTipText] = useState("");
   const pts = Array.from({ length: N }, (_, i) =>
     clamp01((chartRadii ?? values)[i] ?? 0)
   );
@@ -92,11 +89,9 @@ export function HeptagonRadar({
 
   const fmt = rowFormats ?? Array(N).fill("percent" as const);
 
-  const rowPairs = Math.ceil(N / 2);
-
   return (
-    <div className="admin-card border-[#E2E8F0] bg-white p-5">
-      <h3 className="text-sm font-semibold text-[#0A2465] text-center mb-4">
+    <div className="admin-card p-5">
+      <h3 className="text-sm font-semibold text-brand-navy text-center mb-4">
         {title}
       </h3>
       <div className="flex justify-center overflow-x-auto">
@@ -162,72 +157,98 @@ export function HeptagonRadar({
           {chartLabels.map((label, i) => {
             const p = vertex(i, labelR);
             const full = listLabels[i] ?? label;
+            const desc = metricDescriptions?.[i];
             return (
-              <text
+              <g
                 key={i}
-                x={p.x}
-                y={p.y}
-                textAnchor="middle"
-                dominantBaseline="middle"
-                className="pointer-events-none"
-                fill={TURING_PALETTE.secondary.slateBlue}
-                style={{ fontSize: 10 }}
+                style={{ cursor: desc ? "help" : "default" }}
+                onMouseEnter={(e) => {
+                  if (!desc) return;
+                  radarAnchorRef.current = e.currentTarget;
+                  setRadarTipText(desc);
+                  setRadarTipOpen(true);
+                }}
+                onMouseLeave={() => {
+                  setRadarTipOpen(false);
+                  radarAnchorRef.current = null;
+                }}
               >
-                <title>{full}</title>
-                {label}
-              </text>
+                {desc ? (
+                  <circle
+                    cx={p.x}
+                    cy={p.y}
+                    r={24}
+                    fill="transparent"
+                    stroke="none"
+                  />
+                ) : null}
+                <text
+                  x={p.x}
+                  y={p.y}
+                  textAnchor="middle"
+                  dominantBaseline="middle"
+                  pointerEvents="none"
+                  fill={TURING_PALETTE.secondary.slateBlue}
+                  style={{ fontSize: 10 }}
+                >
+                  <title>{full}</title>
+                  {label}
+                </text>
+              </g>
             );
           })}
         </svg>
       </div>
+      <DescriptionTooltipPortal
+        open={radarTipOpen}
+        anchorRef={radarAnchorRef}
+        description={radarTipText}
+        onDismiss={() => {
+          setRadarTipOpen(false);
+          radarAnchorRef.current = null;
+        }}
+      />
 
-      <ul className="mt-4 space-y-2.5 text-xs text-[#5B6B95] list-none p-0 m-0">
-        {Array.from({ length: rowPairs }, (_, row) => {
-          const leftIdx = row * 2;
-          const rightIdx = leftIdx + 1;
+      <ul className="mt-4 space-y-2.5 text-xs text-brand-slate list-none p-0 m-0">
+        {Array.from({ length: N }, (_, i) => {
+          const label = listLabels[i] ?? "";
+          const desc = metricDescriptions?.[i];
+          const tier = tiers[i] ?? "neutral";
+          const rawSec = secondsValues?.[i];
+          const val = values[i];
+          const display = formatMetricValue(
+            val,
+            fmt[i] ?? "percent",
+            rawSec
+          );
 
-          const cell = (i: number) => {
-            const label = listLabels[i] ?? "";
-            const tier = tiers[i] ?? "neutral";
-            const rawSec = secondsValues?.[i];
-            const val = values[i];
-            const display =
-              val === null
-                ? "—"
-                : fmt[i] === "seconds" && rawSec != null
-                  ? `${rawSec < 100 ? rawSec.toFixed(1) : rawSec.toFixed(0)}초`
-                  : formatPercent(val);
-
-            return (
-              <div
-                key={`${label}-${i}`}
-                className="flex items-center justify-between gap-3 min-h-[1.75rem] tabular-nums"
-              >
-                <span className="truncate min-w-0 flex-1" title={label}>
-                  {label}
+          return (
+            <li key={`${label}-${i}`}>
+              <div className="flex items-center justify-between gap-3 min-h-[1.75rem] tabular-nums">
+                <span className="min-w-0 flex-1">
+                  {desc ? (
+                    <TuringHoverDescription label={label} description={desc} />
+                  ) : (
+                    <span className="truncate">{label}</span>
+                  )}
                 </span>
                 <span className="flex items-center gap-2 shrink-0">
                   {val === null ? (
-                    <span className="text-[10px] font-medium text-[#5B6B95] shrink-0">
+                    <span className="text-[10px] font-medium text-brand-slate shrink-0">
                       미지원
                     </span>
                   ) : tier === "neutral" ? (
-                    <NeutralBadge />
+                    <span className="text-[10px] font-medium text-brand-slate shrink-0">
+                      —
+                    </span>
                   ) : (
                     <TierBadge tier={tier} palette="turing" />
                   )}
-                  <span className="font-medium text-[#000000] min-w-[3.5rem] text-right">
+                  <span className="font-medium text-brand-ink min-w-[3.5rem] text-right">
                     {display}
                   </span>
                 </span>
               </div>
-            );
-          };
-
-          return (
-            <li key={`row-${row}`} className="grid grid-cols-2 gap-x-5 items-start">
-              {cell(leftIdx)}
-              {rightIdx < N ? cell(rightIdx) : <div aria-hidden />}
             </li>
           );
         })}

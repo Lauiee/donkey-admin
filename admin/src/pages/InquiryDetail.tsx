@@ -25,10 +25,10 @@ function statusLabel(s: string) {
 function statusColor(s: string) {
   const map: Record<string, string> = {
     pending: "bg-amber-100 text-amber-800",
-    in_progress: "bg-blue-100 text-blue-800",
-    completed: "bg-emerald-100 text-emerald-800",
+    in_progress: "bg-brand-mint/25 text-brand-navy",
+    completed: "bg-brand-accent/20 text-brand-navy",
   };
-  return map[s] ?? "bg-slate-100 text-slate-700";
+  return map[s] ?? "bg-brand-surface text-brand-navy";
 }
 
 function isImageUrl(url: string): boolean {
@@ -228,7 +228,7 @@ export function InquiryDetail() {
   if (loading) {
     return (
       <div>
-        <div className="admin-card p-8 text-slate-500">불러오는 중...</div>
+        <div className="admin-card p-8 text-brand-slate">불러오는 중...</div>
       </div>
     );
   }
@@ -241,7 +241,7 @@ export function InquiryDetail() {
         </div>
         <Link
           to="/inquiry"
-          className="inline-block mt-4 text-sm text-indigo-600 hover:text-indigo-700"
+          className="inline-block mt-4 text-sm text-brand-navy hover:text-brand-ink"
         >
           ← 문의 목록으로
         </Link>
@@ -254,7 +254,7 @@ export function InquiryDetail() {
       <div className="flex items-center justify-between gap-4 mb-6">
         <Link
           to="/inquiry"
-          className="text-sm text-slate-500 hover:text-slate-700"
+          className="text-sm text-brand-slate hover:text-brand-navy"
         >
           ← 문의
         </Link>
@@ -263,7 +263,7 @@ export function InquiryDetail() {
             <select
               value={detail.status}
               onChange={(e) => handleStatusChange(e.target.value)}
-              className="px-3 py-1.5 rounded-lg text-sm font-medium border border-slate-200 bg-white"
+              className="px-3 py-1.5 rounded-lg text-sm font-medium border border-brand-line bg-white"
             >
               {STATUS_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
@@ -286,7 +286,7 @@ export function InquiryDetail() {
               <button
                 type="button"
                 onClick={openEditModal}
-                className="px-3 py-1.5 rounded-lg text-sm font-medium text-slate-700 bg-slate-100 hover:bg-slate-200"
+                className="px-3 py-1.5 rounded-lg text-sm font-medium text-brand-navy bg-brand-surface hover:bg-brand-line/50"
               >
                 수정
               </button>
@@ -304,11 +304,11 @@ export function InquiryDetail() {
       </div>
 
       <div className="admin-card overflow-hidden mb-6">
-        <div className="p-6 border-b border-slate-100">
-          <h2 className="text-xl font-semibold text-slate-900 mb-2">
+        <div className="p-6 border-b border-brand-line/70">
+          <h2 className="text-xl font-semibold text-brand-ink mb-2">
             {detail.title || "(제목 없음)"}
           </h2>
-          <div className="flex flex-wrap items-center gap-3 text-sm text-slate-500">
+          <div className="flex flex-wrap items-center gap-3 text-sm text-brand-slate">
             <span
               className={`inline-flex px-2 py-0.5 rounded text-xs font-medium ${statusColor(
                 detail.status
@@ -325,12 +325,12 @@ export function InquiryDetail() {
           </div>
         </div>
         <div className="p-6">
-          <pre className="whitespace-pre-wrap text-sm text-slate-700 font-sans">
+          <pre className="whitespace-pre-wrap text-sm text-brand-navy font-sans">
             {detail.body || "(내용 없음)"}
           </pre>
           {detail.attachment_urls && detail.attachment_urls.length > 0 && (
-            <div className="mt-4 pt-4 border-t border-slate-100">
-              <p className="text-xs font-medium text-slate-500 mb-2">
+            <div className="mt-4 pt-4 border-t border-brand-line/70">
+              <p className="text-xs font-medium text-brand-slate mb-2">
                 첨부파일
               </p>
               <div className="space-y-4">
@@ -346,7 +346,7 @@ export function InquiryDetail() {
                         <img
                           src={url}
                           alt={url.split("/").pop() ?? "첨부 이미지"}
-                          className="max-w-full max-h-80 rounded-lg border border-slate-200 object-contain"
+                          className="max-w-full max-h-80 rounded-lg border border-brand-line object-contain"
                           loading="lazy"
                         />
                       </a>
@@ -355,7 +355,7 @@ export function InquiryDetail() {
                         href={url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-sm text-indigo-600 hover:underline"
+                        className="text-sm text-brand-navy hover:underline"
                       >
                         {url.split("/").pop() ?? url}
                       </a>
@@ -381,46 +381,46 @@ export function InquiryDetail() {
             className="admin-card w-full max-w-lg max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="p-5 border-b border-slate-100">
-              <h3 className="font-semibold text-slate-800">문의 수정</h3>
+            <div className="p-5 border-b border-brand-line/70">
+              <h3 className="font-semibold text-brand-ink">문의 수정</h3>
             </div>
             <div className="p-5 space-y-4">
               {editError && <p className="text-sm text-red-600">{editError}</p>}
               <div>
-                <label className="block text-sm font-medium text-slate-600 mb-1.5">
+                <label className="block text-sm font-medium text-brand-slate mb-1.5">
                   제목
                 </label>
                 <input
                   type="text"
                   value={editTitle}
                   onChange={(e) => setEditTitle(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-4 py-2.5 rounded-lg border border-brand-line text-sm focus:outline-none focus:ring-2 focus:ring-brand-accent"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-600 mb-1.5">
+                <label className="block text-sm font-medium text-brand-slate mb-1.5">
                   내용
                 </label>
                 <textarea
                   value={editBody}
                   onChange={(e) => setEditBody(e.target.value)}
                   rows={5}
-                  className="w-full px-4 py-2.5 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-4 py-2.5 rounded-lg border border-brand-line text-sm focus:outline-none focus:ring-2 focus:ring-brand-accent"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-600 mb-1.5">
+                <label className="block text-sm font-medium text-brand-slate mb-1.5">
                   첨부파일
                 </label>
                 {editAttachmentUrls.length > 0 && (
-                  <ul className="mb-2 space-y-1 text-sm text-slate-600">
+                  <ul className="mb-2 space-y-1 text-sm text-brand-slate">
                     {editAttachmentUrls.map((url, i) => (
                       <li key={i} className="flex items-center gap-2">
                         <a
                           href={url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-indigo-600 hover:underline truncate"
+                          className="text-brand-navy hover:underline truncate"
                         >
                           {url.split("/").pop() ?? url}
                         </a>
@@ -463,12 +463,12 @@ export function InquiryDetail() {
                     }, 1500);
                     fileInputRef.current?.click();
                   }}
-                  className="px-3 py-2 rounded-lg text-sm font-medium border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100"
+                  className="px-3 py-2 rounded-lg text-sm font-medium border border-brand-line bg-brand-surface text-brand-navy hover:bg-brand-surface"
                 >
                   파일 선택
                 </button>
                 {editFiles.length > 0 && (
-                  <ul className="mt-2 space-y-1 text-sm text-slate-600">
+                  <ul className="mt-2 space-y-1 text-sm text-brand-slate">
                     {editFiles.map((f, i) => (
                       <li key={i} className="flex items-center gap-2">
                         <span>{f.name}</span>
@@ -489,12 +489,12 @@ export function InquiryDetail() {
                 )}
               </div>
             </div>
-            <div className="p-5 border-t border-slate-100 flex justify-end gap-2">
+            <div className="p-5 border-t border-brand-line/70 flex justify-end gap-2">
               <button
                 type="button"
                 onClick={() => !editSubmitting && setEditModalOpen(false)}
                 disabled={editSubmitting}
-                className="px-4 py-2 rounded-lg text-sm font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 disabled:opacity-50"
+                className="px-4 py-2 rounded-lg text-sm font-medium text-brand-navy bg-brand-surface hover:bg-brand-line/50 disabled:opacity-50"
               >
                 취소
               </button>
@@ -507,7 +507,7 @@ export function InquiryDetail() {
                   !editTitle.trim() ||
                   !editBody.trim()
                 }
-                className="px-4 py-2 rounded-lg text-sm font-medium bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 disabled:pointer-events-none"
+                className="px-4 py-2 rounded-lg text-sm font-medium bg-brand-accent text-brand-ink hover:bg-brand-accentDark disabled:opacity-50 disabled:pointer-events-none"
               >
                 {editUploading
                   ? "업로드 중…"
@@ -523,7 +523,7 @@ export function InquiryDetail() {
       {/* 답변 (admin: 등록 폼 + 목록, client: 목록만) */}
       {(isAdmin || detail.replies.length > 0) && (
         <div className="admin-card p-6 mb-6">
-          <h3 className="font-semibold text-slate-800 mb-4">답변</h3>
+          <h3 className="font-semibold text-brand-ink mb-4">답변</h3>
           {isAdmin && (
             <div className="mb-6">
               <textarea
@@ -531,13 +531,13 @@ export function InquiryDetail() {
                 onChange={(e) => setReplyBody(e.target.value)}
                 placeholder="답변을 입력하세요"
                 rows={3}
-                className="w-full px-4 py-2.5 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 mb-2"
+                className="w-full px-4 py-2.5 rounded-lg border border-brand-line text-sm focus:outline-none focus:ring-2 focus:ring-brand-accent mb-2"
               />
               <button
                 type="button"
                 onClick={handleReply}
                 disabled={replySubmitting || !replyBody.trim()}
-                className="px-4 py-2 rounded-lg text-sm font-medium bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 disabled:pointer-events-none"
+                className="px-4 py-2 rounded-lg text-sm font-medium bg-brand-accent text-brand-ink hover:bg-brand-accentDark disabled:opacity-50 disabled:pointer-events-none"
               >
                 {replySubmitting ? "등록 중…" : "답변 등록"}
               </button>
@@ -548,7 +548,7 @@ export function InquiryDetail() {
               {detail.replies.map((r) => (
                 <li
                   key={r.id}
-                  className="pl-4 border-l-2 border-indigo-200 py-1"
+                  className="pl-4 border-l-2 border-brand-accent/40 py-1"
                 >
                   {isAdmin && editingReplyId === r.id ? (
                     <div>
@@ -556,14 +556,14 @@ export function InquiryDetail() {
                         value={editingReplyBody}
                         onChange={(e) => setEditingReplyBody(e.target.value)}
                         rows={3}
-                        className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 mb-2"
+                        className="w-full px-3 py-2 rounded-lg border border-brand-line text-sm focus:outline-none focus:ring-2 focus:ring-brand-accent mb-2"
                       />
                       <div className="flex gap-2">
                         <button
                           type="button"
                           onClick={handleReplyEdit}
                           disabled={!editingReplyBody.trim()}
-                          className="px-3 py-1.5 rounded-lg text-sm font-medium bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50"
+                          className="px-3 py-1.5 rounded-lg text-sm font-medium bg-brand-accent text-brand-ink hover:bg-brand-accentDark disabled:opacity-50"
                         >
                           저장
                         </button>
@@ -573,7 +573,7 @@ export function InquiryDetail() {
                             setEditingReplyId(null);
                             setEditingReplyBody("");
                           }}
-                          className="px-3 py-1.5 rounded-lg text-sm font-medium text-slate-600 bg-slate-100 hover:bg-slate-200"
+                          className="px-3 py-1.5 rounded-lg text-sm font-medium text-brand-slate bg-brand-surface hover:bg-brand-line/50"
                         >
                           취소
                         </button>
@@ -581,11 +581,11 @@ export function InquiryDetail() {
                     </div>
                   ) : (
                     <>
-                      <p className="text-sm text-slate-700 whitespace-pre-wrap">
+                      <p className="text-sm text-brand-navy whitespace-pre-wrap">
                         {r.body}
                       </p>
                       <div className="flex items-center gap-2 mt-2">
-                        <p className="text-xs text-slate-500">
+                        <p className="text-xs text-brand-slate">
                           {r.author && `${r.author} · `}
                           {formatDate(r.created_at)}
                         </p>
@@ -597,7 +597,7 @@ export function InquiryDetail() {
                                 setEditingReplyId(r.id);
                                 setEditingReplyBody(r.body);
                               }}
-                              className="text-xs text-indigo-600 hover:underline"
+                              className="text-xs text-brand-navy hover:underline"
                             >
                               수정
                             </button>
