@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { PageHeader } from "../components/PageHeader";
 import { HeptagonRadar } from "../turing/HeptagonRadar";
 import {
   higherRatioToRadius01,
@@ -8,11 +9,14 @@ import {
   tiersForSttRadar,
 } from "../turing/metricGrades";
 import {
+  STT_METRIC_DESCRIPTIONS,
   STT_RADAR_CHART_LABELS,
   STT_RADAR_LIST_LABELS,
+  SUMMARY_METRIC_DESCRIPTIONS,
   SUMMARY_RADAR_CHART_LABELS,
   SUMMARY_RADAR_LIST_LABELS,
   TURING_EVALUATIONS_PAGE_SIZE,
+  VELOCITY_METRIC_DESCRIPTIONS,
 } from "../turing/turingConfig";
 import { TuringLineChart } from "../turing/TuringLineChart";
 import {
@@ -25,6 +29,7 @@ import {
   fetchTuringEvaluations,
   hasTuringApiKey,
 } from "../turing/turingApi";
+import { TuringHoverDescription } from "../turing/TuringHoverDescription";
 import { VelocityGauge } from "../turing/VelocityGauge";
 
 const SAMP = {
@@ -114,13 +119,16 @@ const SUM_ROW_FORMATS: Array<"percent" | "seconds" | "invertedPercent"> = [
 function SummarizationVelocitySlot({ value }: { value: number | null }) {
   if (value == null) {
     return (
-      <div className="admin-card flex min-h-[260px] flex-col items-center justify-center border-[#E2E8F0] bg-white p-5">
-        <span className="mb-2 text-center text-sm font-medium text-[#000000]">
-          Summarization Velocity
-        </span>
-        <p className="text-sm text-[#5B6B95]">요약 지표 미지원</p>
-        <p className="mt-2 px-2 text-center text-xs text-[#5B6B95]">
-          API <code className="text-[#0A2465]">summary</code> 값이 null일 때
+      <div className="admin-card flex min-h-[260px] flex-col items-center justify-center p-5">
+        <div className="mb-2 text-center text-sm font-medium text-brand-ink">
+          <TuringHoverDescription
+            label="Summarization Velocity"
+            description={VELOCITY_METRIC_DESCRIPTIONS.summarization}
+          />
+        </div>
+        <p className="text-sm text-brand-slate">요약 지표 미지원</p>
+        <p className="mt-2 px-2 text-center text-xs text-brand-slate">
+          API <code className="text-brand-navy">summary</code> 값이 null일 때
         </p>
       </div>
     );
@@ -129,6 +137,7 @@ function SummarizationVelocitySlot({ value }: { value: number | null }) {
     <VelocityGauge
       variant="summarization"
       title="Summarization Velocity"
+      metricDescription={VELOCITY_METRIC_DESCRIPTIONS.summarization}
       value01={value}
     />
   );
@@ -203,6 +212,7 @@ export function Turing() {
   });
 
   const summaryTiers = tiersForSummaryRadarNullable({
+    summarizationVelocity01: demo.summary.summarizationVelocity01,
     hallucinationRatio: demo.summary.hallucinationRatio,
     ssr: demo.summary.ssr,
     icr: demo.summary.icr,
@@ -265,14 +275,11 @@ export function Turing() {
   );
 
   return (
-    <div
-      className={`rounded-2xl bg-[#F4F7FA] -mx-4 px-4 py-6 sm:-mx-6 sm:px-6 md:mx-0 md:px-8 md:py-8 ${loading ? "opacity-60" : ""}`}
-    >
-      <header className="mb-8">
-        <h2 className="text-2xl font-semibold tracking-tight text-[#000000]">
-          Turing
-        </h2>
-      </header>
+    <div className={loading ? "opacity-60" : ""}>
+      <PageHeader
+        title="Turing"
+        subtitle="STT·요약 채점 지표와 최근 평가 추이를 확인합니다."
+      />
 
       {error && (
         <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50/90 px-3 py-2 text-sm text-amber-900">
@@ -281,16 +288,18 @@ export function Turing() {
       )}
 
       <section className="mb-10">
-        <h3 className="text-sm font-semibold text-[#0A2465] mb-4">Velocity</h3>
+        <h3 className="text-sm font-semibold text-brand-navy mb-4">Velocity</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <VelocityGauge
             variant="processing"
             title="Processing Velocity"
+            metricDescription={VELOCITY_METRIC_DESCRIPTIONS.processing}
             value01={demo.processingVelocity01}
           />
           <VelocityGauge
             variant="stt"
             title="STT Velocity"
+            metricDescription={VELOCITY_METRIC_DESCRIPTIONS.stt}
             value01={demo.stt.velocityRatio}
           />
           <SummarizationVelocitySlot
@@ -300,7 +309,7 @@ export function Turing() {
       </section>
 
       <section>
-        <h3 className="text-sm font-semibold text-[#0A2465] mb-4">상세 지표</h3>
+        <h3 className="text-sm font-semibold text-brand-navy mb-4">상세 지표</h3>
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
           <HeptagonRadar
             title="STT"
@@ -308,6 +317,7 @@ export function Turing() {
             chartRadii={sttRadarChartRadii}
             chartLabels={STT_RADAR_CHART_LABELS}
             listLabels={STT_RADAR_LIST_LABELS}
+            metricDescriptions={STT_METRIC_DESCRIPTIONS}
             tiers={sttTiers}
             rowFormats={STT_ROW_FORMATS}
           />
@@ -317,6 +327,7 @@ export function Turing() {
             chartRadii={summaryRadarChartRadii}
             chartLabels={SUMMARY_RADAR_CHART_LABELS}
             listLabels={SUMMARY_RADAR_LIST_LABELS}
+            metricDescriptions={SUMMARY_METRIC_DESCRIPTIONS}
             tiers={summaryTiers}
             rowFormats={SUM_ROW_FORMATS}
           />
@@ -324,7 +335,7 @@ export function Turing() {
       </section>
 
       <section className="mt-10">
-        <h3 className="text-sm font-semibold text-[#0A2465] mb-4">추이</h3>
+        <h3 className="text-sm font-semibold text-brand-navy mb-4">추이</h3>
         <TuringLineChart
           title="종합 품질 (건당)"
           series={trendByCase}

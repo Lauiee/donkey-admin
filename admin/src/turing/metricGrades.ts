@@ -205,8 +205,9 @@ export function tiersForSttRadar(values: {
   ];
 }
 
-/** Summary 레이더 7축 — 0번 속도만 표시(등급 없음) */
+/** Summary 레이더 7축 — 0번 요약 속도(VELOCITY_GAUGE.summarization 기준 등급) */
 export function tiersForSummaryRadar(values: {
+  summarizationVelocity: number;
   hallucinationRatio: number;
   ssr: number;
   icr: number;
@@ -215,7 +216,7 @@ export function tiersForSummaryRadar(values: {
   ssa: number;
 }): Array<MetricTier | "neutral"> {
   return [
-    "neutral",
+    gradeSummarizationVelocity(values.summarizationVelocity),
     gradeHallucinationRatio(values.hallucinationRatio),
     gradeSsr(values.ssr),
     gradeIcr(values.icr),

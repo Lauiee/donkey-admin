@@ -5,6 +5,7 @@ import {
   gradeMir,
   gradeSsa,
   gradeSummaryMdr,
+  gradeSummarizationVelocity,
   gradeSsr,
   type MetricTier,
 } from "./metricGrades";
@@ -105,6 +106,7 @@ export function aggregateEvaluationItems(
 
 /** Summary 레이더 등급 — null 이면 해당 축 neutral */
 export function tiersForSummaryRadarNullable(values: {
+  summarizationVelocity01: number | null;
   hallucinationRatio: number | null;
   ssr: number | null;
   icr: number | null;
@@ -116,7 +118,9 @@ export function tiersForSummaryRadarNullable(values: {
     v === null ? "neutral" : fn(v);
 
   return [
-    "neutral",
+    values.summarizationVelocity01 == null
+      ? "neutral"
+      : gradeSummarizationVelocity(values.summarizationVelocity01),
     t(values.hallucinationRatio, gradeHallucinationRatio),
     t(values.ssr, gradeSsr),
     t(values.icr, (x) => gradeIcr(x) as MetricTier),

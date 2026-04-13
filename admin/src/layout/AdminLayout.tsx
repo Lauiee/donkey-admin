@@ -98,7 +98,7 @@ const navItems: {
   },
   {
     to: "/inquiry",
-    label: "문의",
+    label: "이용 문의",
     icon: (
       <svg
         className="w-5 h-5 shrink-0"
@@ -214,7 +214,7 @@ export function AdminLayout() {
   };
 
   return (
-    <div className="h-screen overflow-hidden bg-transparent flex">
+    <div className="font-sans h-screen overflow-hidden bg-transparent flex">
       <aside className="w-60 h-screen flex shrink-0 flex-col overflow-y-auto rounded-r-3xl border-r border-brand-line/80 bg-white/95 shadow-admin-sidebar backdrop-blur-sm">
         <div className="flex h-14 items-center border-b border-brand-line/60 bg-gradient-to-r from-brand-violet/[0.06] via-white to-brand-accent/[0.05] px-4">
           <span className="bg-gradient-to-r from-brand-navy to-brand-violet bg-clip-text font-bold tracking-tight text-transparent">
@@ -227,11 +227,9 @@ export function AdminLayout() {
               (item) =>
                 role !== "admin" ||
                 item.to === "/inquiry" ||
-                item.to === "/turing"
+                item.to === "/turing",
             )
-            .filter(
-              (item) => !item.disabled || item.to === "/billing"
-            )
+            .filter((item) => !item.disabled || item.to === "/billing")
             .map(({ to, label, icon, disabled }) =>
               disabled ? (
                 <span
@@ -256,7 +254,7 @@ export function AdminLayout() {
                   {icon}
                   {label}
                 </NavLink>
-              )
+              ),
             )}
         </nav>
         <div className="p-3 border-t border-brand-line/60 space-y-1">

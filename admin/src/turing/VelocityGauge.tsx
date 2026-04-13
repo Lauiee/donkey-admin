@@ -14,6 +14,7 @@ import {
   turingTierStroke,
 } from "./turingPalette";
 import { TierBadge } from "./TierBadge";
+import { TuringHoverDescription } from "./TuringHoverDescription";
 
 function clamp01(n: number): number {
   if (Number.isNaN(n)) return 0;
@@ -28,6 +29,8 @@ function arcLargeFlag(t0: number, t1: number): 0 | 1 {
 export type VelocityGaugeProps = {
   variant: VelocityGaugeKind;
   title: string;
+  /** 호버 시 브라우저 툴팁으로 표시할 지표 설명 */
+  metricDescription?: string;
   /** 0~1 스펙 비율 (낮을수록 좋음). processing 은 1 초과 가능 */
   value01: number;
 };
@@ -35,7 +38,7 @@ export type VelocityGaugeProps = {
 /** 상단 반원 게이지 — Velocity 스펙 테이블 임계값으로 등급·색 구간 */
 export function VelocityGauge(props: VelocityGaugeProps) {
   const filterId = useId().replace(/:/g, "");
-  const { variant, title, value01: raw } = props;
+  const { variant, title, metricDescription, value01: raw } = props;
   const v = Math.max(0, raw);
 
   const w = 200;
@@ -72,11 +75,19 @@ export function VelocityGauge(props: VelocityGaugeProps) {
   const ny = cy - needleLen * Math.sin(needleAngle);
 
   return (
-    <div className="admin-card border-[#E2E8F0] bg-white p-5 flex flex-col items-center">
+    <div className="admin-card p-5 flex flex-col items-center">
       <div className="w-full flex items-center justify-center gap-2 mb-1 min-h-[1.5rem]">
-        <span className="text-sm font-medium text-[#000000] text-center">
-          {title}
-        </span>
+        {metricDescription ? (
+          <TuringHoverDescription
+            label={title}
+            description={metricDescription}
+            className="text-center text-sm font-medium text-brand-ink"
+          />
+        ) : (
+          <span className="text-sm font-medium text-brand-ink text-center">
+            {title}
+          </span>
+        )}
       </div>
       <GaugeSvg
         filterId={filterId}
@@ -93,13 +104,13 @@ export function VelocityGauge(props: VelocityGaugeProps) {
         tPoorEnd={tPoorEnd}
         tMediumEnd={tMediumEnd}
       />
-      <p className="text-2xl font-semibold text-[#000000] tabular-nums -mt-1">
+      <p className="text-2xl font-semibold text-brand-ink tabular-nums -mt-1">
         {displayPct}%
       </p>
       <div className="mt-2">
         <TierBadge tier={tier} palette="turing" />
       </div>
-      <div className="mt-3 w-full max-w-[240px] rounded-lg border border-[#E2E8F0] bg-[#F4F7FA] px-3 py-2.5">
+      <div className="mt-3 w-full max-w-[240px] rounded-lg border border-brand-line bg-brand-canvas px-3 py-2.5">
         <ul className="space-y-1.5 text-left">
           {legendRows.map((row) => (
             <li key={row.tier} className="flex gap-2 text-[11px] leading-snug">

@@ -50,9 +50,9 @@ export function TuringLineChart({
   const tickVals = Array.from({ length: yTicks + 1 }, (_, i) => minY + (yRange * i) / yTicks);
 
   return (
-    <div className="admin-card flex min-h-[280px] flex-col overflow-hidden border-[#E2E8F0] bg-white">
+    <div className="admin-card flex min-h-[280px] flex-col overflow-hidden">
       <div className="px-5 pt-5">
-        <h4 className="text-sm font-semibold text-[#0A2465]">{title}</h4>
+        <h4 className="text-sm font-semibold text-brand-navy">{title}</h4>
       </div>
       <div className="mt-3 w-full min-w-0 flex-1">
         <svg
@@ -86,7 +86,7 @@ export function TuringLineChart({
                   x={pad.left - 8}
                   y={y + 4}
                   textAnchor="end"
-                  className="fill-[#5B6B95] text-[10px]"
+                  className="fill-brand-slate text-[10px]"
                   style={{ fontSize: 10 }}
                 >
                   {tv.toFixed(2)}

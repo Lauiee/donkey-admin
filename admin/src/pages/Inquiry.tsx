@@ -74,7 +74,7 @@ export function Inquiry() {
   const [createBody, setCreateBody] = useState("");
   const [createProjectId, setCreateProjectId] = useState("");
   const [createAttachmentUrls, setCreateAttachmentUrls] = useState<string[]>(
-    []
+    [],
   );
   const [createFiles, setCreateFiles] = useState<File[]>([]);
   const [createUploading, setCreateUploading] = useState(false);
@@ -84,7 +84,7 @@ export function Inquiry() {
   const fileInputActiveRef = useRef(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedProject, setSelectedProject] = useState(
-    searchParams.get("project_id") ?? ""
+    searchParams.get("project_id") ?? "",
   );
 
   useEffect(() => {
@@ -122,7 +122,7 @@ export function Inquiry() {
       PAGE_SIZE,
       statusFilter || undefined,
       searchQuery || undefined,
-      selectedProject || undefined
+      selectedProject || undefined,
     )
       .then(({ items: list, total: t }) => {
         if (!cancelled) {
@@ -169,7 +169,7 @@ export function Inquiry() {
         createTitle.trim(),
         createBody.trim(),
         createProjectId || undefined,
-        attachmentUrls
+        attachmentUrls,
       );
       setCreateModalOpen(false);
       setCreateTitle("");
@@ -181,7 +181,7 @@ export function Inquiry() {
         1,
         PAGE_SIZE,
         statusFilter || undefined,
-        searchQuery || undefined
+        searchQuery || undefined,
       )
         .then(({ items: list, total: t }) => {
           setItems(list);
@@ -210,7 +210,7 @@ export function Inquiry() {
   return (
     <div>
       <PageHeader
-        title="문의"
+        title="이용 문의"
         subtitle="문의를 등록하거나 이전 문의 내역을 확인하세요."
         actions={
           <>
@@ -336,7 +336,7 @@ export function Inquiry() {
                           type="button"
                           onClick={() =>
                             setCreateFiles((prev) =>
-                              prev.filter((_, j) => j !== i)
+                              prev.filter((_, j) => j !== i),
                             )
                           }
                           className="text-red-500 hover:text-red-600 text-xs"
@@ -384,8 +384,8 @@ export function Inquiry() {
                 {createUploading
                   ? "업로드 중…"
                   : createSubmitting
-                  ? "등록 중…"
-                  : "등록"}
+                    ? "등록 중…"
+                    : "등록"}
               </button>
             </div>
           </div>
@@ -468,7 +468,7 @@ export function Inquiry() {
                       <td className="px-5 py-3">
                         <span
                           className={`inline-flex px-2 py-0.5 rounded text-xs font-medium ${statusColor(
-                            item.status
+                            item.status,
                           )}`}
                         >
                           {statusLabel(item.status)}
@@ -483,8 +483,8 @@ export function Inquiry() {
                       {projects.length > 0 && (
                         <td className="px-5 py-3 text-brand-slate">
                           {item.project_id
-                            ? projects.find((p) => p.id === item.project_id)
-                                ?.name ?? item.project_id
+                            ? (projects.find((p) => p.id === item.project_id)
+                                ?.name ?? item.project_id)
                             : "-"}
                         </td>
                       )}

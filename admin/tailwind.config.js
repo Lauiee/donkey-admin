@@ -1,4 +1,21 @@
 /** @type {import('tailwindcss').Config} */
+import defaultTheme from "tailwindcss/defaultTheme.js";
+
+const pretendardStack = [
+  '"Pretendard Variable"',
+  "Pretendard",
+  "-apple-system",
+  "BlinkMacSystemFont",
+  "system-ui",
+  "Roboto",
+  '"Helvetica Neue"',
+  '"Segoe UI"',
+  '"Apple SD Gothic Neo"',
+  '"Noto Sans KR"',
+  '"Malgun Gothic"',
+  "sans-serif",
+];
+
 export default {
   content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
   theme: {
@@ -32,6 +49,12 @@ export default {
         "3xl": "1.5rem",
         "4xl": "1.75rem",
       },
+    },
+    /** extend가 아닌 theme에 두어 `ui-sans-serif` 기본 스택과 병합되지 않게 함 */
+    fontFamily: {
+      sans: pretendardStack,
+      mono: pretendardStack,
+      serif: defaultTheme.fontFamily.serif,
     },
   },
   plugins: [],
