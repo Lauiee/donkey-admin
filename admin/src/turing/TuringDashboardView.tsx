@@ -8,7 +8,7 @@ import {
   summarizationVelocityToRadius01,
   tiersForSttRadar,
 } from "./metricGrades";
-import { TuringMetricsStack } from "./TuringMetricCard";
+import { TuringMetricsStack, type MetricTrendPoint } from "./TuringMetricCard";
 import {
   STT_METRIC_DESCRIPTIONS,
   STT_METRIC_SLUGS,
@@ -28,7 +28,11 @@ import {
   type TuringDemoState,
 } from "./turingAggregate";
 import { averageSamples } from "./turingSampleAverages";
-import { fetchTuringEvaluations, hasTuringApiKey } from "./turingApi";
+import {
+  fetchTuringEvaluations,
+  hasTuringApiKey,
+  type EvaluationListItemApi,
+} from "./turingApi";
 import { TuringHoverDescription } from "./TuringHoverDescription";
 import { VelocityGauge } from "./VelocityGauge";
 import { TURING_GAUGE_THUMB_LINE } from "./turingGaugeTheme";
@@ -116,6 +120,115 @@ const SUM_ROW_FORMATS: Array<"percent" | "seconds" | "invertedPercent"> = [
   "percent",
 ];
 
+type MetricTrendSeriesGroup = {
+  stt: MetricTrendPoint[][];
+  summary: MetricTrendPoint[][];
+};
+
+function formatTrendTimeLabel(iso: string): { short: string; full: string } {
+  if (typeof iso === "string" && iso.length >= 16) {
+    const m = iso.match(
+      /^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})/
+    );
+    if (m) {
+      const [, yyyy, MM, DD, HH, mm] = m;
+      return {
+        short: `${MM}/${DD} ${HH}:${mm}`,
+        full: `${yyyy}-${MM}-${DD} ${HH}:${mm}`,
+      };
+    }
+  }
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) {
+    return { short: "--/-- --:--", full: String(iso) };
+  }
+  const MM = String(d.getMonth() + 1).padStart(2, "0");
+  const DD = String(d.getDate()).padStart(2, "0");
+  const HH = String(d.getHours()).padStart(2, "0");
+  const mm = String(d.getMinutes()).padStart(2, "0");
+  return {
+    short: `${MM}/${DD} ${HH}:${mm}`,
+    full: d.toLocaleString(),
+  };
+}
+
+function buildMetricTrendSeriesFromItems(
+  items: EvaluationListItemApi[]
+): MetricTrendSeriesGroup {
+  const sorted = [...items].sort(
+    (a, b) =>
+      new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+  );
+  const sttExtractors: Array<(x: EvaluationListItemApi) => number | null> = [
+    (x) => x.metrics.stt.stt_velocity,
+    (x) => x.metrics.stt.uer,
+    (x) => x.metrics.stt.pii_protection,
+    (x) => x.metrics.stt.mmr,
+    (x) => x.metrics.stt.mdr,
+    (x) => x.metrics.stt.diarization_accuracy,
+    (x) => x.metrics.stt.redundancy_ratio,
+  ];
+  const summaryExtractors: Array<(x: EvaluationListItemApi) => number | null> = [
+    (x) => x.metrics.summary.summarization_velocity,
+    (x) => x.metrics.summary.hallucination_ratio,
+    (x) => x.metrics.summary.ssr,
+    (x) => x.metrics.summary.icr,
+    (x) => x.metrics.summary.summary_mdr,
+    (x) => x.metrics.summary.mir,
+    (x) => x.metrics.summary.ssa,
+  ];
+
+  const build = (extractors: Array<(x: EvaluationListItemApi) => number | null>) =>
+    extractors.map((read) =>
+      sorted.flatMap((item, i) => {
+        const v = read(item);
+        if (v == null || Number.isNaN(v)) return [];
+        const t = formatTrendTimeLabel(item.created_at);
+        return [{ label: t.short, tooltipLabel: `${t.full} (#${i + 1})`, value: v }];
+      })
+    );
+
+  return { stt: build(sttExtractors), summary: build(summaryExtractors) };
+}
+
+function buildFallbackMetricTrendSeries(): MetricTrendSeriesGroup {
+  const now = Date.now();
+  const timeLabel = (idx: number) => {
+    const d = new Date(now - (9 - idx) * 60 * 60 * 1000);
+    const MM = String(d.getMonth() + 1).padStart(2, "0");
+    const DD = String(d.getDate()).padStart(2, "0");
+    const HH = String(d.getHours()).padStart(2, "0");
+    const mm = String(d.getMinutes()).padStart(2, "0");
+    return `${MM}/${DD} ${HH}:${mm}`;
+  };
+  const mapSeries = (vals: readonly number[]): MetricTrendPoint[] =>
+    vals.map((value, i) => ({
+      label: timeLabel(i),
+      tooltipLabel: `Fallback ${timeLabel(i)}`,
+      value,
+    }));
+  return {
+    stt: [
+      mapSeries(SAMP.sttVelocityRatio),
+      mapSeries(SAMP.uer),
+      mapSeries(SAMP.piiProtection),
+      mapSeries(SAMP.mmr),
+      mapSeries(SAMP.mdr),
+      mapSeries(SAMP.diarizationAccuracy),
+      mapSeries(SAMP.redundancyRatio),
+    ],
+    summary: [
+      mapSeries(SAMP.summarizationVelocity),
+      mapSeries(SAMP.summaryHallucination),
+      mapSeries(SAMP.ssr),
+      mapSeries(SAMP.icr),
+      mapSeries(SAMP.summaryMdr),
+      mapSeries(SAMP.mir),
+      mapSeries(SAMP.ssa),
+    ],
+  };
+}
+
 function SummarizationVelocitySlot({ value }: { value: number | null }) {
   if (value == null) {
     return (
@@ -187,6 +300,12 @@ export function TuringDashboardView({
   const [perCaseComposite, setPerCaseComposite] = useState<number[]>(
     () => PER_CASE_COMPOSITE_FALLBACK
   );
+  const [sttMetricTrendSeries, setSttMetricTrendSeries] = useState<
+    MetricTrendPoint[][]
+  >(() => buildFallbackMetricTrendSeries().stt);
+  const [summaryMetricTrendSeries, setSummaryMetricTrendSeries] = useState<
+    MetricTrendPoint[][]
+  >(() => buildFallbackMetricTrendSeries().summary);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -194,6 +313,9 @@ export function TuringDashboardView({
     if (!hasTuringApiKey()) {
       setDemo(buildFallbackDemo());
       setPerCaseComposite(PER_CASE_COMPOSITE_FALLBACK);
+      const fallback = buildFallbackMetricTrendSeries();
+      setSttMetricTrendSeries(fallback.stt);
+      setSummaryMetricTrendSeries(fallback.summary);
       return;
     }
 
@@ -211,16 +333,25 @@ export function TuringDashboardView({
           setError("조회된 채점 결과가 없습니다.");
           setDemo(buildFallbackDemo());
           setPerCaseComposite(PER_CASE_COMPOSITE_FALLBACK);
+          const fallback = buildFallbackMetricTrendSeries();
+          setSttMetricTrendSeries(fallback.stt);
+          setSummaryMetricTrendSeries(fallback.summary);
           return;
         }
         const agg = aggregateEvaluationItems(res.items);
         setDemo(agg.demo);
         setPerCaseComposite(agg.perCaseComposite);
+        const trendSeries = buildMetricTrendSeriesFromItems(res.items);
+        setSttMetricTrendSeries(trendSeries.stt);
+        setSummaryMetricTrendSeries(trendSeries.summary);
       } catch (e) {
         if (!cancelled) {
           setError(e instanceof Error ? e.message : "불러오기 실패");
           setDemo(buildFallbackDemo());
           setPerCaseComposite(PER_CASE_COMPOSITE_FALLBACK);
+          const fallback = buildFallbackMetricTrendSeries();
+          setSttMetricTrendSeries(fallback.stt);
+          setSummaryMetricTrendSeries(fallback.summary);
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -312,6 +443,27 @@ export function TuringDashboardView({
     }
   );
 
+  // Detailed Metrics에서는 Velocity 섹션과 중복되는 속도 지표(첫 항목)를 제외한다.
+  const sttDetailChartLabels = STT_RADAR_CHART_LABELS.slice(1);
+  const sttDetailListLabels = STT_RADAR_LIST_LABELS.slice(1);
+  const sttDetailDescriptions = STT_METRIC_DESCRIPTIONS.slice(1);
+  const sttDetailSlugs = STT_METRIC_SLUGS.slice(1);
+  const sttDetailValues = sttRadarDisplayValues.slice(1);
+  const sttDetailRadii = sttRadarChartRadii.slice(1);
+  const sttDetailTiers = sttTiers.slice(1);
+  const sttDetailRowFormats = STT_ROW_FORMATS.slice(1);
+  const sttDetailTrendSeries = sttMetricTrendSeries.slice(1);
+
+  const summaryDetailChartLabels = SUMMARY_RADAR_CHART_LABELS.slice(1);
+  const summaryDetailListLabels = SUMMARY_RADAR_LIST_LABELS.slice(1);
+  const summaryDetailDescriptions = SUMMARY_METRIC_DESCRIPTIONS.slice(1);
+  const summaryDetailSlugs = SUMMARY_METRIC_SLUGS.slice(1);
+  const summaryDetailValues = summaryRadarDisplayValues.slice(1);
+  const summaryDetailRadii = summaryRadarChartRadii.slice(1);
+  const summaryDetailTiers = summaryTiers.slice(1);
+  const summaryDetailRowFormats = SUM_ROW_FORMATS.slice(1);
+  const summaryDetailTrendSeries = summaryMetricTrendSeries.slice(1);
+
   return (
     <div className={loading ? "opacity-60" : ""}>
       <PageHeader title={pageTitle} subtitle={pageSubtitle} />
@@ -347,23 +499,23 @@ export function TuringDashboardView({
           <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
             <HeptagonRadar
               title="STT"
-              values={sttRadarDisplayValues}
-              chartRadii={sttRadarChartRadii}
-              chartLabels={STT_RADAR_CHART_LABELS}
-              listLabels={STT_RADAR_LIST_LABELS}
-              metricDescriptions={STT_METRIC_DESCRIPTIONS}
-              tiers={sttTiers}
-              rowFormats={STT_ROW_FORMATS}
+              values={sttDetailValues}
+              chartRadii={sttDetailRadii}
+              chartLabels={sttDetailChartLabels}
+              listLabels={sttDetailListLabels}
+              metricDescriptions={sttDetailDescriptions}
+              tiers={sttDetailTiers}
+              rowFormats={sttDetailRowFormats}
             />
             <HeptagonRadar
               title="Summary (SOAP)"
-              values={summaryRadarDisplayValues}
-              chartRadii={summaryRadarChartRadii}
-              chartLabels={SUMMARY_RADAR_CHART_LABELS}
-              listLabels={SUMMARY_RADAR_LIST_LABELS}
-              metricDescriptions={SUMMARY_METRIC_DESCRIPTIONS}
-              tiers={summaryTiers}
-              rowFormats={SUM_ROW_FORMATS}
+              values={summaryDetailValues}
+              chartRadii={summaryDetailRadii}
+              chartLabels={summaryDetailChartLabels}
+              listLabels={summaryDetailListLabels}
+              metricDescriptions={summaryDetailDescriptions}
+              tiers={summaryDetailTiers}
+              rowFormats={summaryDetailRowFormats}
             />
           </div>
         ) : (
@@ -371,24 +523,26 @@ export function TuringDashboardView({
             <TuringMetricsStack
               heading="STT"
               metaPrefix="STT"
-              slugs={STT_METRIC_SLUGS}
-              listLabels={STT_RADAR_LIST_LABELS}
-              descriptions={STT_METRIC_DESCRIPTIONS}
+              slugs={sttDetailSlugs}
+              listLabels={sttDetailListLabels}
+              descriptions={sttDetailDescriptions}
               legendSource="stt"
-              values={sttRadarDisplayValues}
-              tiers={sttTiers}
-              rowFormats={STT_ROW_FORMATS}
+              values={sttDetailValues}
+              tiers={sttDetailTiers}
+              rowFormats={sttDetailRowFormats}
+              trendSeriesByMetric={sttDetailTrendSeries}
             />
             <TuringMetricsStack
               heading="Summary (SOAP)"
               metaPrefix="SUMMARY"
-              slugs={SUMMARY_METRIC_SLUGS}
-              listLabels={SUMMARY_RADAR_LIST_LABELS}
-              descriptions={SUMMARY_METRIC_DESCRIPTIONS}
+              slugs={summaryDetailSlugs}
+              listLabels={summaryDetailListLabels}
+              descriptions={summaryDetailDescriptions}
               legendSource="summary"
-              values={summaryRadarDisplayValues}
-              tiers={summaryTiers}
-              rowFormats={SUM_ROW_FORMATS}
+              values={summaryDetailValues}
+              tiers={summaryDetailTiers}
+              rowFormats={summaryDetailRowFormats}
+              trendSeriesByMetric={summaryDetailTrendSeries}
             />
           </div>
         )}

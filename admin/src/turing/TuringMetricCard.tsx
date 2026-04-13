@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   TIER_LABEL,
   type MetricTier,
@@ -17,6 +18,11 @@ import { TURING_PALETTE } from "./turingPalette";
 const GAUGE_THUMB_LINE_DEEP = "#4a7d5e";
 
 type RowFormat = TuringGaugeRowFormat;
+export type MetricTrendPoint = {
+  label: string;
+  value: number;
+  tooltipLabel?: string;
+};
 
 /** 막대 thumb — 원시 비율 0~1을 좌→우에 선형 대응 (레이더 chartRadii 의 ‘좋음 방향’과 별개) */
 function rawRatioToThumb01(raw: number | null): number | null {
@@ -77,6 +83,180 @@ function MetricThresholdLegend({
   );
 }
 
+function InlineMetricTrendChart({
+  series,
+  rowFormat,
+}: {
+  series: MetricTrendPoint[];
+  rowFormat: RowFormat;
+}) {
+  if (series.length < 2) {
+    return (
+      <div className="rounded-lg border border-brand-line/50 bg-brand-surface/40 px-3 py-2 text-[11px] text-brand-slate/70">
+        시계열 데이터가 부족합니다.
+      </div>
+    );
+  }
+
+  const w = 520;
+  const h = 150;
+  const pad = { left: 28, right: 16, top: 12, bottom: 28 };
+  const innerW = w - pad.left - pad.right;
+  const innerH = h - pad.top - pad.bottom;
+  const vals = series.map((p) => p.value);
+  const min = Math.min(...vals);
+  const max = Math.max(...vals);
+  const isPercentScale = rowFormat === "percent" || rowFormat === "invertedPercent";
+  const yPad = (max - min) * 0.15 || 0.04;
+  const lo = isPercentScale ? 0 : min - yPad;
+  const hi = isPercentScale ? 1 : max + yPad;
+  const range = hi - lo || 1;
+  const xAt = (i: number) =>
+    pad.left + (innerW * (series.length <= 1 ? 0.5 : i / (series.length - 1)));
+  const yAt = (v: number) => pad.top + innerH * (1 - (v - lo) / range);
+
+  const linePath = series
+    .map((p, i) => `${i === 0 ? "M" : "L"} ${xAt(i).toFixed(1)} ${yAt(p.value).toFixed(1)}`)
+    .join(" ");
+
+  const yTicks = 4;
+  const yVals = Array.from(
+    { length: yTicks + 1 },
+    (_, i) => lo + ((hi - lo) * i) / yTicks
+  );
+
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const hovered = hoveredIndex == null ? null : series[hoveredIndex];
+  const hx = hoveredIndex == null ? 0 : xAt(hoveredIndex);
+  const hy = hoveredIndex == null ? 0 : yAt(series[hoveredIndex].value);
+  const tipW = 160;
+  const tipH = 52;
+  const tipX = Math.min(w - pad.right - tipW, Math.max(pad.left, hx - tipW / 2));
+  const tipY = Math.max(6, hy - tipH - 10);
+
+  return (
+    <div className="rounded-lg border border-brand-line/50 bg-brand-surface/35 px-2.5 py-2">
+      <svg
+        viewBox={`0 0 ${w} ${h}`}
+        className="block h-[138px] w-full"
+        preserveAspectRatio="none"
+        aria-label="지표 시계열 추이"
+      >
+        {yVals.map((yv, i) => {
+          const y = yAt(yv);
+          return (
+            <g key={`y-${i}`}>
+              <line
+                x1={pad.left}
+                y1={y}
+                x2={w - pad.right}
+                y2={y}
+                stroke={TURING_PALETTE.secondary.slateBlue}
+                strokeOpacity={0.18}
+                strokeWidth={1}
+              />
+              <text
+                x={pad.left - 6}
+                y={y + 3}
+                textAnchor="end"
+                fill={TURING_PALETTE.secondary.slateBlue}
+                style={{ fontSize: 10 }}
+              >
+                {isPercentScale ? `${Math.round(yv * 100)}` : yv.toFixed(2)}
+              </text>
+            </g>
+          );
+        })}
+        <path
+          d={linePath}
+          fill="none"
+          stroke={TURING_PALETTE.secondary.navy}
+          strokeWidth={2}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        {hovered ? (
+          <line
+            x1={hx}
+            y1={pad.top}
+            x2={hx}
+            y2={pad.top + innerH}
+            stroke={TURING_PALETTE.secondary.slateBlue}
+            strokeOpacity={0.28}
+            strokeWidth={1}
+            strokeDasharray="4 4"
+          />
+        ) : null}
+        {series.map((p, i) => (
+          <circle
+            key={`${p.label}-${i}`}
+            cx={xAt(i)}
+            cy={yAt(p.value)}
+            r={hoveredIndex === i ? 4.5 : 3}
+            fill={TURING_PALETTE.base.white}
+            stroke={TURING_PALETTE.accent}
+            strokeWidth={hoveredIndex === i ? 2.4 : 1.5}
+            onMouseEnter={() => setHoveredIndex(i)}
+            onMouseLeave={() => setHoveredIndex((prev) => (prev === i ? null : prev))}
+          >
+            <title>
+              {`${p.tooltipLabel ?? p.label}\n값: ${
+                isPercentScale ? `${(p.value * 100).toFixed(1)}%` : p.value.toFixed(4)
+              }`}
+            </title>
+          </circle>
+        ))}
+        {hovered ? (
+          <g>
+            <rect
+              x={tipX}
+              y={tipY}
+              width={tipW}
+              height={tipH}
+              rx={8}
+              fill={TURING_PALETTE.base.white}
+              stroke={TURING_PALETTE.secondary.slateBlue}
+              strokeOpacity={0.25}
+            />
+            <text
+              x={tipX + 10}
+              y={tipY + 18}
+              fill={TURING_PALETTE.secondary.navy}
+              style={{ fontSize: 10, fontWeight: 600 }}
+            >
+              {hovered.tooltipLabel ?? hovered.label}
+            </text>
+            <text
+              x={tipX + 10}
+              y={tipY + 36}
+              fill={TURING_PALETTE.secondary.slateBlue}
+              style={{ fontSize: 10 }}
+            >
+              {`값: ${
+                isPercentScale
+                  ? `${(hovered.value * 100).toFixed(1)}%`
+                  : hovered.value.toFixed(4)
+              }`}
+            </text>
+          </g>
+        ) : null}
+        {series.map((point, idx) => (
+          <text
+            key={`x-${idx}-${point.label}`}
+            x={xAt(idx)}
+            y={h - 6}
+            textAnchor="middle"
+            fill={TURING_PALETTE.secondary.slateBlue}
+            style={{ fontSize: 9 }}
+          >
+            {point.label}
+          </text>
+        ))}
+      </svg>
+    </div>
+  );
+}
+
 export function TuringMetricCard({
   groupMeta,
   metricSlug,
@@ -88,6 +268,9 @@ export function TuringMetricCard({
   rowFormat,
   thresholdLegendRows,
   unsupported,
+  trendSeries,
+  expanded,
+  onToggleExpand,
 }: {
   groupMeta: string;
   metricSlug: string;
@@ -100,12 +283,27 @@ export function TuringMetricCard({
   rowFormat: RowFormat;
   thresholdLegendRows: Array<{ tier: MetricTier; condition: string }>;
   unsupported: boolean;
+  trendSeries: MetricTrendPoint[];
+  expanded: boolean;
+  onToggleExpand: () => void;
 }) {
   const hint = directionHint(rowFormat);
   const showGauge = !unsupported && thumbPosition01 !== null;
 
   return (
-    <div className="admin-card flex flex-col gap-2.5 p-4 sm:p-4">
+    <div
+      className="admin-card flex cursor-pointer flex-col gap-2.5 p-4 transition-colors hover:bg-brand-surface/20 sm:p-4"
+      role="button"
+      tabIndex={0}
+      onClick={onToggleExpand}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onToggleExpand();
+        }
+      }}
+      aria-expanded={expanded}
+    >
       <div className="flex items-start justify-between gap-2">
         <p className="min-w-0 text-[10px] font-semibold uppercase leading-tight tracking-[0.14em] text-brand-slate/55">
           {groupMeta} · {metricSlug}
@@ -191,6 +389,15 @@ export function TuringMetricCard({
       )}
 
       <MetricThresholdLegend rows={thresholdLegendRows} />
+      <div
+        className={`overflow-hidden transition-all duration-300 ${
+          expanded ? "max-h-[240px] opacity-100" : "max-h-0 opacity-0"
+        }`}
+      >
+        <div className="pt-1">
+          <InlineMetricTrendChart series={trendSeries} rowFormat={rowFormat} />
+        </div>
+      </div>
     </div>
   );
 }
@@ -207,6 +414,7 @@ export function TuringMetricsStack({
   tiers,
   rowFormats,
   secondsValues,
+  trendSeriesByMetric,
 }: {
   heading: string;
   metaPrefix: string;
@@ -219,8 +427,10 @@ export function TuringMetricsStack({
   tiers: Array<MetricTier | "neutral">;
   rowFormats: RowFormat[];
   secondsValues?: Array<number | undefined>;
+  trendSeriesByMetric?: MetricTrendPoint[][];
 }) {
   const n = slugs.length;
+  const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
 
   return (
     <div className="flex min-w-0 flex-col gap-3">
@@ -257,6 +467,11 @@ export function TuringMetricsStack({
                 rowFormat={fmt}
                 thresholdLegendRows={thresholdLegendRows}
                 unsupported={unsupported}
+                trendSeries={trendSeriesByMetric?.[i] ?? []}
+                expanded={expandedIndex === i}
+                onToggleExpand={() =>
+                  setExpandedIndex((prev) => (prev === i ? null : i))
+                }
               />
             </li>
           );
