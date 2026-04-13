@@ -90,24 +90,25 @@ function buildFallbackDemo(): TuringDemoState {
   };
 }
 
-const STT_ROW_FORMATS: Array<"percent" | "seconds"> = [
-  "percent",
-  "percent",
-  "percent",
-  "percent",
-  "percent",
-  "percent",
-  "percent",
+/** Velocity 행도 점수 %(100 − 원시%). 그 외 낮을수록 좋음 지표 동일 */
+const STT_ROW_FORMATS: Array<"percent" | "seconds" | "invertedPercent"> = [
+  "invertedPercent", // STT Velocity
+  "invertedPercent", // UER
+  "percent", // PII Protection
+  "invertedPercent", // MMR
+  "invertedPercent", // MDR
+  "percent", // Diarization Accuracy
+  "invertedPercent", // Redundancy Ratio
 ];
 
-const SUM_ROW_FORMATS: Array<"percent" | "seconds"> = [
-  "percent",
-  "percent",
-  "percent",
-  "percent",
-  "percent",
-  "percent",
-  "percent",
+const SUM_ROW_FORMATS: Array<"percent" | "seconds" | "invertedPercent"> = [
+  "invertedPercent", // Summarization Velocity
+  "invertedPercent", // Hallucination Ratio
+  "percent", // SSR
+  "invertedPercent", // ICR
+  "invertedPercent", // Summary MDR
+  "percent", // MIR
+  "percent", // SSA
 ];
 
 function SummarizationVelocitySlot({ value }: { value: number | null }) {

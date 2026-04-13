@@ -1,12 +1,18 @@
 import { useId } from "react";
 import {
   type VelocityGaugeKind,
+  TIER_LABEL,
   velocityGaugeArcSplits,
+  velocityGaugeLegend,
   velocityGaugeNeedleT,
   velocityGaugeTier,
-  VELOCITY_GAUGE,
+  velocityRawToDisplayScorePct,
 } from "./metricGrades";
-import { TURING_PALETTE, turingTierStroke } from "./turingPalette";
+import {
+  TURING_PALETTE,
+  turingTierDotFill,
+  turingTierStroke,
+} from "./turingPalette";
 import { TierBadge } from "./TierBadge";
 
 function clamp01(n: number): number {
@@ -55,15 +61,15 @@ export function VelocityGauge(props: VelocityGaugeProps) {
   };
 
   const tier = velocityGaugeTier(variant, v);
+  const legendRows = velocityGaugeLegend(variant);
   const needleT = clamp01(velocityGaugeNeedleT(variant, v));
-  const { tGreenEnd, tYellowEnd } = velocityGaugeArcSplits(variant);
+  const { tPoorEnd, tMediumEnd } = velocityGaugeArcSplits(variant);
+  const displayPct = velocityRawToDisplayScorePct(v);
   const needleAngle = Math.PI * (1 - needleT);
   /** 호의 반지름(r)까지 — 너무 짧으면(r-4) 색 띠에 묻히고, 너무 길면 튀어 보임 */
   const needleLen = r;
   const nx = cx + needleLen * Math.cos(needleAngle);
   const ny = cy - needleLen * Math.sin(needleAngle);
-
-  const pct = Math.round(v * 1000) / 10;
 
   return (
     <div className="admin-card border-[#E2E8F0] bg-white p-5 flex flex-col items-center">
@@ -84,18 +90,40 @@ export function VelocityGauge(props: VelocityGaugeProps) {
         h={h}
         nx={nx}
         ny={ny}
-        tGreenEnd={tGreenEnd}
-        tYellowEnd={tYellowEnd}
+        tPoorEnd={tPoorEnd}
+        tMediumEnd={tMediumEnd}
       />
       <p className="text-2xl font-semibold text-[#000000] tabular-nums -mt-1">
-        {pct}%
+        {displayPct}%
       </p>
       <div className="mt-2">
         <TierBadge tier={tier} palette="turing" />
       </div>
-      <p className="text-[11px] text-[#5B6B95] mt-2 text-center px-1">
-        {VELOCITY_GAUGE[variant].caption}
-      </p>
+      <div className="mt-3 w-full max-w-[240px] rounded-lg border border-[#E2E8F0] bg-[#F4F7FA] px-3 py-2.5">
+        <ul className="space-y-1.5 text-left">
+          {legendRows.map((row) => (
+            <li key={row.tier} className="flex gap-2 text-[11px] leading-snug">
+              <span
+                className="mt-1.5 h-2 w-2 shrink-0 rounded-full ring-1 ring-white/80"
+                style={{ backgroundColor: turingTierDotFill(row.tier) }}
+                aria-hidden
+              />
+              <span>
+                <span
+                  className="font-semibold"
+                  style={{ color: turingTierStroke(row.tier) }}
+                >
+                  {TIER_LABEL[row.tier]}
+                </span>
+                <span style={{ color: TURING_PALETTE.secondary.slateBlue }}>
+                  {" "}
+                  — {row.description}
+                </span>
+              </span>
+            </li>
+          ))}
+        </ul>
+      </div>
     </div>
   );
 }
@@ -112,8 +140,8 @@ function GaugeSvg({
   h,
   nx,
   ny,
-  tGreenEnd,
-  tYellowEnd,
+  tPoorEnd,
+  tMediumEnd,
 }: {
   filterId: string;
   arcPath: (t0: number, t1: number) => string;
@@ -126,9 +154,12 @@ function GaugeSvg({
   h: number;
   nx: number;
   ny: number;
-  tGreenEnd: number;
-  tYellowEnd: number;
+  /** 점수 t 기준: 미흡 구간 [0, tPoorEnd) */
+  tPoorEnd: number;
+  /** 보통 구간 [tPoorEnd, tMediumEnd), 우수 [tMediumEnd, 1] */
+  tMediumEnd: number;
 }) {
+  const showPoorArc = tPoorEnd > 1e-6;
   return (
     <svg
       viewBox={`0 0 ${w} ${h}`}
@@ -146,16 +177,18 @@ function GaugeSvg({
           <feDropShadow dx="0" dy="1" stdDeviation="1.2" floodOpacity="0.15" />
         </filter>
       </defs>
+      {showPoorArc && (
+        <path
+          d={arcPath(0, tPoorEnd)}
+          fill="none"
+          stroke={turingTierStroke("poor")}
+          strokeWidth={stroke}
+          strokeLinecap="round"
+          opacity={0.92}
+        />
+      )}
       <path
-        d={arcPath(0, tGreenEnd)}
-        fill="none"
-        stroke={turingTierStroke("excellent")}
-        strokeWidth={stroke}
-        strokeLinecap="round"
-        opacity={0.95}
-      />
-      <path
-        d={arcPath(tGreenEnd, tYellowEnd)}
+        d={arcPath(showPoorArc ? tPoorEnd : 0, tMediumEnd)}
         fill="none"
         stroke={turingTierStroke("medium")}
         strokeWidth={stroke}
@@ -163,12 +196,12 @@ function GaugeSvg({
         opacity={0.95}
       />
       <path
-        d={arcPath(tYellowEnd, 1)}
+        d={arcPath(tMediumEnd, 1)}
         fill="none"
-        stroke={turingTierStroke("poor")}
+        stroke={turingTierStroke("excellent")}
         strokeWidth={stroke}
         strokeLinecap="round"
-        opacity={0.92}
+        opacity={0.95}
       />
       {[0, 0.2, 0.4, 0.6, 0.8, 1].map((t) => {
         const outer = polar(t);

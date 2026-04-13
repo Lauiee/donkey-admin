@@ -51,46 +51,76 @@ export const VELOCITY_GAUGE = {
     vmax: 1.2,
     excellentLt: 0.3,
     mediumLt: 1.0,
-    caption: "우수 < 0.3 · 보통 < 1.0 · 미흡 ≥ 1.0",
   },
   stt: {
     vmax: 0.6,
     excellentLt: 0.2,
     mediumLt: 0.5,
-    caption: "우수 < 0.2 · 보통 < 0.5 · 미흡 ≥ 0.5",
   },
   summarization: {
     /** 시각화 스케일(0~1+). 임계값(0.1/0.3)과 무관 — 너무 작으면 값이 vmax를 넘을 때 바늘이 끝에 붙어 색 띠에 가려짐 */
     vmax: 1.0,
     excellentLt: 0.1,
     mediumLt: 0.3,
-    caption: "우수 < 0.1 · 보통 < 0.3 · 미흡 ≥ 0.3",
   },
 } as const;
 
 export type VelocityGaugeKind = keyof typeof VELOCITY_GAUGE;
+
+/**
+ * 원시 비율(낮을수록 좋음) → 표시 점수 % (100 − 원시%, 0~100 클램프).
+ * Velocity 게이지·속도 행·바늘 위치에 동일 기준 사용.
+ */
+export function velocityRawToDisplayScorePct(v: number): number {
+  const rawPct = Math.round(Math.max(0, v) * 1000) / 10;
+  return Math.round(Math.min(100, Math.max(0, 100 - rawPct)) * 10) / 10;
+}
+
+function formatLegendScorePct(n: number): string {
+  const p = Math.round(n * 10) / 10;
+  return `${p}%`;
+}
+
+/** Velocity 범례 — 표시 점수 % (100 − 원시 비율) 구간 */
+export function velocityGaugeLegend(
+  kind: VelocityGaugeKind
+): Array<{ tier: MetricTier; description: string }> {
+  const { excellentLt, mediumLt } = VELOCITY_GAUGE[kind];
+  const hi = 100 - excellentLt * 100;
+  const lo = 100 - mediumLt * 100;
+  const hiS = formatLegendScorePct(hi);
+  const loS = formatLegendScorePct(lo);
+  return [
+    { tier: "excellent", description: `${hiS} 초과` },
+    { tier: "medium", description: `${loS} 초과 ~ ${hiS} 이하` },
+    { tier: "poor", description: `${loS} 이하` },
+  ];
+}
 
 export function velocityGaugeTier(kind: VelocityGaugeKind, v: number): MetricTier {
   const { excellentLt, mediumLt } = VELOCITY_GAUGE[kind];
   return tierLowerIsBetter(v, excellentLt, mediumLt);
 }
 
-/** 반원 위 바늘 위치 t∈[0,1] — 값이 클수록 오른쪽(큰 t). 스펙은 여전히 낮을수록 우수 */
-export function velocityGaugeNeedleT(kind: VelocityGaugeKind, v: number): number {
-  const { vmax } = VELOCITY_GAUGE[kind];
-  return clamp(Math.min(v / vmax, 1), 0, 1);
+/**
+ * 반원 위 바늘 t∈[0,1] — 표시 점수가 클수록 오른쪽(높을수록 좋음).
+ * 원시 v는 스펙 그대로 넣고, 내부에서 점수%로 변환.
+ */
+export function velocityGaugeNeedleT(_kind: VelocityGaugeKind, v: number): number {
+  return clamp(velocityRawToDisplayScorePct(v) / 100, 0, 1);
 }
 
-/** 반원 색 구간 (좌→우: 우수·보통·미흡 — 값이 커질수록 오른쪽으로) */
+/**
+ * 반원 색 구간 (좌→미흡, 우→우수) — t는 점수 기준 0~1, 클수록 오른쪽·우수.
+ */
 export function velocityGaugeArcSplits(kind: VelocityGaugeKind): {
-  tGreenEnd: number;
-  tYellowEnd: number;
+  tPoorEnd: number;
+  tMediumEnd: number;
 } {
-  const { vmax, excellentLt, mediumLt } = VELOCITY_GAUGE[kind];
-  return {
-    tGreenEnd: clamp(excellentLt / vmax, 0, 1),
-    tYellowEnd: clamp(mediumLt / vmax, 0, 1),
-  };
+  const { excellentLt, mediumLt } = VELOCITY_GAUGE[kind];
+  const tPoorEnd = clamp(velocityRawToDisplayScorePct(mediumLt) / 100, 0, 1);
+  const tMediumEnd = clamp(velocityRawToDisplayScorePct(excellentLt) / 100, 0, 1);
+  return { tPoorEnd, tMediumEnd };
 }
 
 export function gradeProcessingVelocity(v: number): MetricTier {

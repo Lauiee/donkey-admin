@@ -1,5 +1,5 @@
 import { useId } from "react";
-import type { MetricTier } from "./metricGrades";
+import { type MetricTier, velocityRawToDisplayScorePct } from "./metricGrades";
 import { TierBadge } from "./TierBadge";
 import { TURING_PALETTE, turingTierDotFill } from "./turingPalette";
 
@@ -16,8 +16,8 @@ type Props = {
   listLabels: readonly string[];
   /** 각 꼭지 등급 — 속도만 표시 축은 neutral */
   tiers: Array<MetricTier | "neutral">;
-  /** 하단 수치 표시 — 초 또는 % */
-  rowFormats?: Array<"percent" | "seconds">;
+  /** 하단 수치 표시 — 초, 원시 %, 또는 Velocity용 (100 − 원시%) 점수 */
+  rowFormats?: Array<"percent" | "seconds" | "invertedPercent">;
   /** rowFormats 가 seconds 일 때의 원시 초 값 (STT 속도 축 등) */
   secondsValues?: Array<number | undefined>;
 };
@@ -35,6 +35,10 @@ function angleAt(i: number): number {
 
 function formatPercent(v: number): string {
   return `${Math.round(clamp01(v) * 1000) / 10}%`;
+}
+
+function formatInvertedPercent(v: number): string {
+  return `${velocityRawToDisplayScorePct(v)}%`;
 }
 
 function NeutralBadge() {
@@ -196,7 +200,9 @@ export function HeptagonRadar({
                 ? "—"
                 : fmt[i] === "seconds" && rawSec != null
                   ? `${rawSec < 100 ? rawSec.toFixed(1) : rawSec.toFixed(0)}초`
-                  : formatPercent(val);
+                  : fmt[i] === "invertedPercent"
+                    ? formatInvertedPercent(val)
+                    : formatPercent(val);
 
             return (
               <div

@@ -2,8 +2,8 @@ import { getToken } from "./auth";
 
 /**
  * API 베이스 URL.
- * - VITE_API_BASE가 있으면 개발/프로덕션 모두 해당 절대 URL (예: https://donkey.ai.kr)
- * - 개발에서 비어 있으면 /api (Vite 프록시 → localhost:8000)
+ * - VITE_API_BASE가 있으면 개발/프로덕션 모두 해당 절대 URL (브라우저 직접 호출 → 원격이면 CORS 필요)
+ * - 개발에서 비어 있으면 /api (Vite 프록시 — 대상은 vite.config 의 VITE_API_PROXY_TARGET, 기본 localhost:8000)
  * - 프로덕션에서 비어 있으면 상대 경로(같은 오리진)
  */
 const rawBase =

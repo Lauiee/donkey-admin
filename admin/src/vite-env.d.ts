@@ -2,6 +2,8 @@
 
 interface ImportMetaEnv {
   readonly VITE_API_BASE?: string;
+  /** 개발 서버 전용(vite.config): /api 프록시 대상 URL. 클라이언트 번들에서는 미사용 */
+  readonly VITE_API_PROXY_TARGET?: string;
   /** STT 채점 API Base — 비우면 개발 시 `/turing-api`(Vite 프록시) */
   readonly VITE_TURING_API_BASE?: string;
   /** STT 채점 API 키 (`X-API-Key`) */
