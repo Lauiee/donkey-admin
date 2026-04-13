@@ -14,15 +14,23 @@ export default {
           canvas: "#F4F7FA",
           surface: "#FAFAFA",
           line: "#E2E8F0",
+          coral: "#FF5A5F",
+          violet: "#7B61FF",
         },
       },
       boxShadow: {
         "admin-card":
-          "0 4px 24px rgba(10, 36, 101, 0.06), 0 1px 3px rgba(10, 36, 101, 0.04)",
+          "0 10px 40px -4px rgba(10, 36, 101, 0.1), 0 4px 14px rgba(10, 36, 101, 0.05)",
+        "admin-soft":
+          "0 8px 30px rgba(10, 36, 101, 0.06), 0 2px 8px rgba(10, 36, 101, 0.04)",
+        "admin-sidebar":
+          "4px 0 32px rgba(10, 36, 101, 0.06)",
       },
       borderRadius: {
         xl: "0.875rem",
         "2xl": "1.25rem",
+        "3xl": "1.5rem",
+        "4xl": "1.75rem",
       },
     },
   },

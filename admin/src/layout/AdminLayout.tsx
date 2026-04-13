@@ -214,10 +214,10 @@ export function AdminLayout() {
   };
 
   return (
-    <div className="h-screen overflow-hidden bg-brand-canvas flex">
-      <aside className="w-60 h-screen bg-white border-r border-brand-line flex flex-col shrink-0 shadow-admin-card overflow-y-auto">
-        <div className="h-14 px-4 flex items-center border-b border-brand-line/60">
-          <span className="font-semibold text-brand-ink tracking-tight">
+    <div className="h-screen overflow-hidden bg-transparent flex">
+      <aside className="w-60 h-screen flex shrink-0 flex-col overflow-y-auto rounded-r-3xl border-r border-brand-line/80 bg-white/95 shadow-admin-sidebar backdrop-blur-sm">
+        <div className="flex h-14 items-center border-b border-brand-line/60 bg-gradient-to-r from-brand-violet/[0.06] via-white to-brand-accent/[0.05] px-4">
+          <span className="bg-gradient-to-r from-brand-navy to-brand-violet bg-clip-text font-bold tracking-tight text-transparent">
             DONKEY
           </span>
         </div>
@@ -248,8 +248,8 @@ export function AdminLayout() {
                   className={({ isActive }) =>
                     `flex items-center gap-3 px-3 py-2.5 rounded-full text-sm font-medium transition-all ${
                       isActive
-                        ? "bg-brand-accent text-brand-ink shadow-sm"
-                        : "text-brand-slate border border-transparent hover:border-brand-line hover:bg-brand-surface"
+                        ? "bg-gradient-to-r from-brand-violet to-brand-navy text-white shadow-md shadow-brand-violet/25"
+                        : "border border-transparent text-brand-slate hover:border-brand-line hover:bg-brand-surface"
                     }`
                   }
                 >
@@ -297,7 +297,7 @@ export function AdminLayout() {
           </button>
         </div>
       </aside>
-      <main className="flex-1 min-h-0 overflow-auto bg-brand-canvas">
+      <main className="min-h-0 flex-1 overflow-auto bg-transparent">
         <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
           <Outlet />
         </div>

@@ -59,11 +59,7 @@ export function DashboardLineChart({ data }: { data: DailyCountPoint[] }) {
   const lineRef = useRef<SVGPathElement>(null);
   const areaRef = useRef<SVGPathElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
-  const [hover, setHover] = useState<{
-    i: number;
-    px: number;
-    py: number;
-  } | null>(null);
+  const [hoverIndex, setHoverIndex] = useState<number | null>(null);
 
   const { lineD, areaD, points, max } = useMemo(() => buildPaths(data), [data]);
 
@@ -117,20 +113,18 @@ export function DashboardLineChart({ data }: { data: DailyCountPoint[] }) {
     if (!ctm) return;
     const cur = pt.matrixTransform(ctm.inverse());
     const i = pickIndex(cur.x);
-    const rect = svg.getBoundingClientRect();
-    setHover({
-      i,
-      px: rect.left + (points[i].x / VB.W) * rect.width,
-      py: rect.top + (points[i].y / VB.H) * rect.height,
-    });
+    setHoverIndex(i);
   };
 
   if (data.length === 0) return null;
 
-  const active = hover ? points[hover.i] : null;
+  const active =
+    hoverIndex != null && points[hoverIndex] ? points[hoverIndex] : null;
 
   return (
-    <div className="relative w-full select-none">
+    <div className="w-full select-none">
+      {/* 차트만 감싸 % 좌표 = viewBox와 1:1 (fixed/CTM 불일치 방지) */}
+      <div className="relative w-full">
       {/* viewBox 비율 = 표시 비율 (w-full + h-auto) → meet 시 가로·세로 레터박스 없음, 라인이 첫/끝 날짜까지 맞음 */}
       <svg
         ref={svgRef}
@@ -140,7 +134,7 @@ export function DashboardLineChart({ data }: { data: DailyCountPoint[] }) {
         preserveAspectRatio="xMidYMid meet"
         role="img"
         aria-label="최근 일별 요청량 라인 차트"
-        onPointerLeave={() => setHover(null)}
+        onPointerLeave={() => setHoverIndex(null)}
         onPointerMove={(e) => {
           if (e.pointerType === "mouse" || e.pointerType === "pen") {
             onPointer(e.clientX, e.clientY);
@@ -185,7 +179,7 @@ export function DashboardLineChart({ data }: { data: DailyCountPoint[] }) {
         />
 
         {points.map((p, i) => {
-          const isH = hover?.i === i;
+          const isH = hoverIndex === i;
           return (
             <g key={p.date}>
               <circle
@@ -208,11 +202,11 @@ export function DashboardLineChart({ data }: { data: DailyCountPoint[] }) {
           );
         })}
 
-        {hover != null && points[hover.i] && (
+        {hoverIndex != null && points[hoverIndex] && (
           <line
-            x1={points[hover.i].x}
+            x1={points[hoverIndex].x}
             y1={VB.padT}
-            x2={points[hover.i].x}
+            x2={points[hoverIndex].x}
             y2={VB.H - VB.padB}
             stroke="#0a2465"
             strokeOpacity={0.12}
@@ -221,6 +215,30 @@ export function DashboardLineChart({ data }: { data: DailyCountPoint[] }) {
           />
         )}
       </svg>
+
+      {active && hoverIndex != null && points[hoverIndex] && (
+        <div
+          className="pointer-events-none absolute z-40 min-w-[9rem] rounded-lg border border-brand-line bg-white px-3 py-2 text-xs shadow-md"
+          style={{
+            left: `${(points[hoverIndex].x / VB.W) * 100}%`,
+            top: `${(points[hoverIndex].y / VB.H) * 100}%`,
+            transform: "translate(-50%, calc(-100% - 10px))",
+          }}
+        >
+          <div className="font-bold text-brand-ink">
+            요청량{" "}
+            <span className="tabular-nums text-brand-navy">{active.count}</span>
+            건
+          </div>
+          <div className="mt-0.5 text-[11px] text-brand-slate">
+            {active.date.replace(/-/g, ".")}
+          </div>
+          <div className="mt-1 text-[10px] text-brand-mint">
+            최대 대비 {max > 0 ? Math.round((active.count / max) * 100) : 0}%
+          </div>
+        </div>
+      )}
+      </div>
 
       {/* compact x labels — same spacing as chart (full width, no huge gaps) */}
       <div className="mt-1 flex w-full justify-between gap-0 px-1 sm:px-0">
@@ -239,30 +257,6 @@ export function DashboardLineChart({ data }: { data: DailyCountPoint[] }) {
         ))}
       </div>
 
-      {active && hover && (
-        <div
-          className="pointer-events-none fixed z-40 rounded-lg border border-brand-line bg-white px-3 py-2 text-xs shadow-md transition-transform duration-150"
-          style={{
-            left: Math.min(
-              typeof window !== "undefined" ? window.innerWidth - 160 : 0,
-              Math.max(12, hover.px - 72)
-            ),
-            top: Math.max(12, hover.py - 56),
-          }}
-        >
-          <div className="font-bold text-brand-ink">
-            요청량{" "}
-            <span className="tabular-nums text-brand-navy">{active.count}</span>
-            건
-          </div>
-          <div className="mt-0.5 text-[11px] text-brand-slate">
-            {active.date.replace(/-/g, ".")}
-          </div>
-          <div className="mt-1 text-[10px] text-brand-mint">
-            최대 대비 {max > 0 ? Math.round((active.count / max) * 100) : 0}%
-          </div>
-        </div>
-      )}
     </div>
   );
 }

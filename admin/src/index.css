@@ -11,6 +11,8 @@
   --brand-accent-dark: #35b8aa;
   --brand-canvas: #f4f7fa;
   --brand-surface: #fafafa;
+  --brand-coral: #ff5a5f;
+  --brand-violet: #7b61ff;
 }
 
 body {
@@ -21,11 +23,28 @@ body {
   -moz-osx-font-smoothing: grayscale;
   background-color: var(--brand-canvas);
   color: var(--brand-ink);
+  background-image:
+    radial-gradient(
+      ellipse 90% 55% at 12% -8%,
+      rgba(123, 97, 255, 0.09),
+      transparent 55%
+    ),
+    radial-gradient(
+      ellipse 70% 45% at 100% 0%,
+      rgba(64, 224, 208, 0.1),
+      transparent 50%
+    ),
+    radial-gradient(
+      ellipse 55% 35% at 88% 100%,
+      rgba(255, 90, 95, 0.06),
+      transparent 45%
+    );
+  background-attachment: fixed;
 }
 
 @layer components {
   .admin-card {
-    @apply rounded-xl border border-brand-line bg-white shadow-admin-card;
+    @apply rounded-3xl border border-white/70 bg-white/95 shadow-admin-card ring-1 ring-black/[0.04] backdrop-blur-[2px];
   }
 
   .admin-page-title {
@@ -43,14 +62,30 @@ body {
   .admin-link {
     @apply font-medium text-brand-navy underline-offset-2 hover:text-brand-accent hover:underline;
   }
-  /* 소제목: 장식 바 없이 구분선만 */
   .admin-section-title {
-    @apply border-b border-brand-line pb-2 text-sm font-semibold text-brand-ink;
+    @apply text-sm font-bold tracking-tight text-brand-navy;
   }
   .admin-toolbar {
     @apply admin-card mb-6 p-4 sm:p-5;
   }
   .admin-modal-backdrop {
     @apply fixed inset-0 z-50 flex items-center justify-center bg-brand-navy/20 p-4 backdrop-blur-sm;
+  }
+
+  /* StatCard 보라 그라데이션 호버 시 상단 세그먼트·토글 가독성 */
+  .stat-card-header-extra .inline-flex.rounded-full {
+    @apply transition-[border-color,background-color,box-shadow] duration-700 ease-out;
+  }
+  .stat-card-header-extra button {
+    @apply transition-[background-color,color,box-shadow] duration-700 ease-out;
+  }
+  .group:hover .stat-card-header-extra .inline-flex.rounded-full {
+    @apply border-white/35 bg-gradient-to-b from-white/20 to-white/10 shadow-none ring-0;
+  }
+  .group:hover .stat-card-header-extra button[aria-selected="true"] {
+    @apply bg-white text-brand-navy shadow-none ring-0;
+  }
+  .group:hover .stat-card-header-extra button:not([aria-selected="true"]) {
+    @apply text-white/75 hover:text-white;
   }
 }

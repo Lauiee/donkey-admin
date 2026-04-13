@@ -270,122 +270,143 @@ export function Dashboard() {
         actions={headerActions}
       />
 
-      <section className="mb-10">
-        <h3 className="admin-section-title mb-5">핵심 지표</h3>
-        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-6 xl:gap-6">
-          <StatCard
-            className="xl:col-span-2"
-            label="요청량"
-            icon={<IconChart />}
-            headerRight={
-              <SegmentedControl
-                options={REQ_OPTIONS}
-                value={reqPeriod}
-                onChange={setReqPeriod}
-              />
-            }
-          >
-            <p className="text-3xl font-bold tracking-tight text-brand-ink sm:text-4xl">
-              {reqPeriod === "day"
-                ? stats.today_count
-                : reqPeriod === "week"
-                  ? stats.week_count
-                  : stats.month_count ?? 0}
-              <span className="ml-1.5 text-lg font-semibold text-brand-mint">
-                건
-              </span>
-            </p>
-          </StatCard>
-
-          <StatCard
-            className="xl:col-span-2"
-            label="최근 1개월 평균 요청량 (단위: 일)"
-            icon={<IconCalendar />}
-          >
-            <p className="text-3xl font-bold tracking-tight text-brand-ink sm:text-4xl">
-              {stats.month_count != null
-                ? (stats.month_count / 30).toFixed(1)
-                : "0"}
-              <span className="ml-1.5 text-lg font-semibold text-brand-mint">
-                건
-              </span>
-            </p>
-          </StatCard>
-
-          <StatCard
-            className="xl:col-span-2"
-            label="성공률"
-            icon={<IconTarget />}
-            headerRight={
-              <SegmentedControl
-                options={PERIOD_OPTIONS}
-                value={period}
-                onChange={setPeriod}
-              />
-            }
-            footer={
-              <span>
-                완료 <strong className="text-brand-navy">{r.completed}</strong> ·
-                오류{" "}
-                <strong className="text-brand-navy">{r.error}</strong>
-              </span>
-            }
-          >
-            <p className="text-3xl font-bold tracking-tight text-brand-ink sm:text-4xl">
-              {completedRate}
-              <span className="ml-1.5 text-lg font-semibold text-brand-mint">
-                %
-              </span>
-            </p>
-          </StatCard>
-
-          <StatCard
-            className="xl:col-span-2 xl:col-start-2"
-            label="오류 발생"
-            icon={<IconAlert />}
-            headerRight={
-              <SegmentedControl
-                options={PERIOD_OPTIONS}
-                value={errorPeriod}
-                onChange={setErrorPeriod}
-                stopPropagation
-              />
-            }
-            footer={<span className="text-brand-mint">클릭하여 상세 보기</span>}
-            onClick={() => {
-              setErrorModalOpen(true);
-              setErrorModalLoading(true);
-              setErrorItems(null);
-              getErrors(errorPeriod, selectedProject || undefined)
-                .then((res) => setErrorItems(res.items))
-                .catch(() => setErrorItems([]))
-                .finally(() => setErrorModalLoading(false));
-            }}
-          >
-            <p className="text-3xl font-bold tracking-tight text-brand-ink sm:text-4xl">
-              {rError.error}
-              <span className="ml-1.5 text-lg font-semibold text-brand-mint">
-                건
-              </span>
-            </p>
-          </StatCard>
-
-          <StatCard
-            className="md:col-span-2 xl:col-span-2 xl:col-start-4"
-            label="전체 처리 시간 평균"
-            icon={<IconClock />}
-          >
-            <p className="text-3xl font-bold tracking-tight text-brand-ink sm:text-4xl">
-              {stats.avg_processing_sec != null
-                ? Number(stats.avg_processing_sec).toFixed(1)
-                : "—"}
-              {stats.avg_processing_sec != null && (
+      <section className="relative mb-10 overflow-hidden rounded-4xl border border-white/80 bg-gradient-to-br from-white via-[#fafcfe] to-[#eef2ff] p-5 shadow-admin-card ring-1 ring-black/[0.04] sm:p-7">
+        <div
+          className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-gradient-to-br from-brand-violet/18 to-transparent blur-3xl"
+          aria-hidden
+        />
+        <div
+          className="pointer-events-none absolute -bottom-28 -left-20 h-64 w-64 rounded-full bg-gradient-to-tr from-brand-accent/14 to-transparent blur-3xl"
+          aria-hidden
+        />
+        <div className="relative z-10">
+          <div className="mb-6 flex items-center gap-2.5 border-b border-brand-line/80 pb-3">
+            <span
+              className="h-2.5 w-2.5 shrink-0 rounded-full bg-brand-coral shadow-sm shadow-brand-coral/45"
+              aria-hidden
+            />
+            <h3 className="text-base font-bold tracking-tight text-brand-ink">
+              핵심 지표
+            </h3>
+            <span className="ml-auto hidden text-xs font-medium text-brand-slate sm:inline">
+              일·주·월 기준 요약
+            </span>
+          </div>
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-6 xl:gap-6">
+            <StatCard
+              className="xl:col-span-2"
+              label="요청량"
+              icon={<IconChart />}
+              headerRight={
+                <SegmentedControl
+                  options={REQ_OPTIONS}
+                  value={reqPeriod}
+                  onChange={setReqPeriod}
+                />
+              }
+            >
+              <p className="text-3xl font-bold tracking-tight text-brand-ink sm:text-4xl">
+                {reqPeriod === "day"
+                  ? stats.today_count
+                  : reqPeriod === "week"
+                    ? stats.week_count
+                    : stats.month_count ?? 0}
                 <span className="ml-1.5 text-lg font-semibold text-brand-mint">
-                  초
+                  건
                 </span>
-              )}
-            </p>
-          </StatCard>
+              </p>
+            </StatCard>
+
+            <StatCard
+              className="xl:col-span-2"
+              label="최근 1개월 평균 요청량 (단위: 일)"
+              icon={<IconCalendar />}
+            >
+              <p className="text-3xl font-bold tracking-tight text-brand-ink sm:text-4xl">
+                {stats.month_count != null
+                  ? (stats.month_count / 30).toFixed(1)
+                  : "0"}
+                <span className="ml-1.5 text-lg font-semibold text-brand-mint">
+                  건
+                </span>
+              </p>
+            </StatCard>
+
+            <StatCard
+              className="xl:col-span-2"
+              label="성공률"
+              icon={<IconTarget />}
+              headerRight={
+                <SegmentedControl
+                  options={PERIOD_OPTIONS}
+                  value={period}
+                  onChange={setPeriod}
+                />
+              }
+              footer={
+                <span>
+                  완료 <strong className="text-brand-navy">{r.completed}</strong>{" "}
+                  · 오류{" "}
+                  <strong className="text-brand-navy">{r.error}</strong>
+                </span>
+              }
+            >
+              <p className="text-3xl font-bold tracking-tight text-brand-ink sm:text-4xl">
+                {completedRate}
+                <span className="ml-1.5 text-lg font-semibold text-brand-mint">
+                  %
+                </span>
+              </p>
+            </StatCard>
+
+            <StatCard
+              className="xl:col-span-2 xl:col-start-2"
+              label="오류 발생"
+              icon={<IconAlert />}
+              headerRight={
+                <SegmentedControl
+                  options={PERIOD_OPTIONS}
+                  value={errorPeriod}
+                  onChange={setErrorPeriod}
+                  stopPropagation
+                />
+              }
+              footer={<span className="text-brand-mint">클릭하여 상세 보기</span>}
+              onClick={() => {
+                setErrorModalOpen(true);
+                setErrorModalLoading(true);
+                setErrorItems(null);
+                getErrors(errorPeriod, selectedProject || undefined)
+                  .then((res) => setErrorItems(res.items))
+                  .catch(() => setErrorItems([]))
+                  .finally(() => setErrorModalLoading(false));
+              }}
+            >
+              <p className="text-3xl font-bold tracking-tight text-brand-ink sm:text-4xl">
+                {rError.error}
+                <span className="ml-1.5 text-lg font-semibold text-brand-mint">
+                  건
+                </span>
+              </p>
+            </StatCard>
+
+            <StatCard
+              className="md:col-span-2 xl:col-span-2 xl:col-start-4"
+              label="전체 처리 시간 평균"
+              icon={<IconClock />}
+            >
+              <p className="text-3xl font-bold tracking-tight text-brand-ink sm:text-4xl">
+                {stats.avg_processing_sec != null
+                  ? Number(stats.avg_processing_sec).toFixed(1)
+                  : "—"}
+                {stats.avg_processing_sec != null && (
+                  <span className="ml-1.5 text-lg font-semibold text-brand-mint">
+                    초
+                  </span>
+                )}
+              </p>
+            </StatCard>
+          </div>
         </div>
       </section>
 
@@ -393,7 +414,7 @@ export function Dashboard() {
         <section>
           <h3 className="admin-section-title mb-5">최근 7일 요청량 추이</h3>
           <div className="admin-card overflow-hidden p-0">
-            <div className="border-b border-brand-line bg-brand-surface/50 px-5 py-4 sm:px-7">
+            <div className="border-b border-brand-line/80 bg-brand-surface/50 px-5 py-4 sm:px-7">
               <p className="text-sm font-semibold text-brand-navy">
                 일별 요청량
               </p>
@@ -525,15 +546,14 @@ function ServerStatusBadge({
           }`}
         />
       </span>
-      <span className="hidden sm:inline">API</span>
-      <span className="font-bold">
+      <span className="text-left font-bold leading-snug">
         {health === null && !healthRefreshing
-          ? "확인 중"
+          ? "API 서버 상태 : 확인 중"
           : healthRefreshing
-            ? "확인 중"
+            ? "API 서버 상태 : 확인 중"
             : health?.ok
-              ? "정상"
-              : health?.message ?? "연결 실패"}
+              ? "API 서버 상태 : 정상"
+              : `API 서버 상태 : ${health?.message ?? "연결 실패"}`}
       </span>
       <button
         type="button"

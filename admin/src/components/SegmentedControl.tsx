@@ -20,7 +20,7 @@ export function SegmentedControl<T extends string>({
     size === "xs" ? "px-2 py-0.5 text-[11px]" : "px-2.5 py-1 text-xs";
   return (
     <div
-      className="inline-flex gap-0.5 rounded-full border border-brand-line/90 bg-brand-surface p-0.5 shadow-[inset_0_1px_2px_rgba(10,36,101,0.06)]"
+      className="inline-flex gap-0.5 rounded-full border border-brand-line/80 bg-gradient-to-b from-white to-brand-surface p-0.5 shadow-[inset_0_1px_2px_rgba(10,36,101,0.05)]"
       role="tablist"
       onClick={stopPropagation ? (e) => e.stopPropagation() : undefined}
     >
@@ -32,7 +32,7 @@ export function SegmentedControl<T extends string>({
           aria-selected={value === opt.value}
           className={`${pad} rounded-full font-semibold transition-all ${
             value === opt.value
-              ? "bg-white text-brand-navy shadow-sm ring-1 ring-black/[0.06]"
+              ? "bg-gradient-to-br from-white to-brand-surface text-brand-navy shadow-[0_2px_10px_rgba(123,97,255,0.18)] ring-1 ring-brand-violet/25"
               : "text-brand-slate hover:text-brand-navy"
           }`}
           onClick={(e) => {
