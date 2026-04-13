@@ -11,8 +11,8 @@ function Section({
 }) {
   return (
     <div className="mb-6">
-      <h3 className="text-sm font-semibold text-slate-700 mb-2">{title}</h3>
-      <div className="bg-slate-50 rounded-lg p-4 text-sm text-slate-700">
+      <h3 className="text-sm font-semibold text-brand-navy mb-2">{title}</h3>
+      <div className="bg-brand-surface rounded-lg p-4 text-sm text-brand-navy">
         {children}
       </div>
     </div>
@@ -21,14 +21,14 @@ function Section({
 
 /** conversation_content: { role, index, content }[] */
 function TranscriptionBlock({ items }: { items: unknown[] | null }) {
-  if (!items?.length) return <span className="text-slate-500">-</span>;
+  if (!items?.length) return <span className="text-brand-slate">-</span>;
   return (
     <div className="space-y-2 whitespace-pre-wrap">
       {(items as { role?: string; content?: string }[]).map((item, i) => (
         <p key={i}>
           {item.role ? (
             <>
-              <span className="font-medium text-slate-800">{item.role}: </span>
+              <span className="font-medium text-brand-ink">{item.role}: </span>
               {item.content ?? ""}
             </>
           ) : (
@@ -50,8 +50,8 @@ function SummaryList({
   if (!items?.length) return null;
   return (
     <div className="mb-4 last:mb-0">
-      <h4 className="text-xs font-semibold text-slate-600 mb-1.5">{label}</h4>
-      <ul className="list-disc list-inside space-y-1 text-slate-700">
+      <h4 className="text-xs font-semibold text-brand-slate mb-1.5">{label}</h4>
+      <ul className="list-disc list-inside space-y-1 text-brand-navy">
         {items.map((text, i) => (
           <li key={i}>{text}</li>
         ))}
@@ -87,52 +87,52 @@ function ErrorDetail({ detail }: { detail: RequestDetail }) {
 
       {/* 요청 정보 */}
       <div>
-        <h3 className="text-sm font-semibold text-slate-700 mb-2">요청 정보</h3>
-        <div className="bg-slate-50 rounded-lg divide-y divide-slate-200 text-sm">
+        <h3 className="text-sm font-semibold text-brand-navy mb-2">요청 정보</h3>
+        <div className="bg-brand-surface rounded-lg divide-y divide-brand-line text-sm">
           {err?.code && (
             <div className="flex px-4 py-2.5">
-              <span className="w-28 shrink-0 font-medium text-slate-500">
+              <span className="w-28 shrink-0 font-medium text-brand-slate">
                 에러 코드
               </span>
-              <span className="text-slate-800 font-mono text-xs">
+              <span className="text-brand-ink font-mono text-xs">
                 {err.code}
               </span>
             </div>
           )}
           <div className="flex px-4 py-2.5">
-            <span className="w-28 shrink-0 font-medium text-slate-500">
+            <span className="w-28 shrink-0 font-medium text-brand-slate">
               Job ID
             </span>
-            <span className="text-slate-800 font-mono text-xs break-all">
+            <span className="text-brand-ink font-mono text-xs break-all">
               {detail.job_id}
             </span>
           </div>
           {detail.file_url && (
             <div className="flex px-4 py-2.5">
-              <span className="w-28 shrink-0 font-medium text-slate-500">
+              <span className="w-28 shrink-0 font-medium text-brand-slate">
                 음성 URL
               </span>
-              <span className="text-slate-800 text-xs break-all">
+              <span className="text-brand-ink text-xs break-all">
                 {detail.file_url}
               </span>
             </div>
           )}
           {detail.created_at && (
             <div className="flex px-4 py-2.5">
-              <span className="w-28 shrink-0 font-medium text-slate-500">
+              <span className="w-28 shrink-0 font-medium text-brand-slate">
                 요청 시각
               </span>
-              <span className="text-slate-800">
+              <span className="text-brand-ink">
                 {new Date(detail.created_at).toLocaleString("ko-KR")}
               </span>
             </div>
           )}
           {detail.processing_time_ms != null && (
             <div className="flex px-4 py-2.5">
-              <span className="w-28 shrink-0 font-medium text-slate-500">
+              <span className="w-28 shrink-0 font-medium text-brand-slate">
                 처리 시간
               </span>
-              <span className="text-slate-800">
+              <span className="text-brand-ink">
                 {(detail.processing_time_ms / 1000).toFixed(2)}초
               </span>
             </div>
@@ -176,12 +176,12 @@ export function HistoryDetail() {
 
   if (!jobId) {
     return (
-      <div className="admin-card p-8 text-slate-500">
+      <div className="admin-card p-8 text-brand-slate">
         job_id가 없습니다.{" "}
         <button
           type="button"
           onClick={() => navigate("/history")}
-          className="text-indigo-600 hover:underline"
+          className="text-brand-navy hover:underline"
         >
           사용 내역으로
         </button>
@@ -190,7 +190,7 @@ export function HistoryDetail() {
   }
 
   if (loading) {
-    return <div className="admin-card p-8 text-slate-500">불러오는 중...</div>;
+    return <div className="admin-card p-8 text-brand-slate">불러오는 중...</div>;
   }
 
   if (error || !detail) {
@@ -201,7 +201,7 @@ export function HistoryDetail() {
           <button
             type="button"
             onClick={() => navigate("/history")}
-            className="px-3 py-1.5 rounded-lg text-sm font-medium bg-slate-100 hover:bg-slate-200 text-slate-700"
+            className="px-3 py-1.5 rounded-lg text-sm font-medium bg-brand-surface hover:bg-brand-line/50 text-brand-navy"
           >
             목록으로
           </button>
@@ -216,7 +216,7 @@ export function HistoryDetail() {
         <button
           type="button"
           onClick={() => navigate("/history")}
-          className="px-3 py-1.5 rounded-lg text-sm font-medium text-slate-700 bg-slate-100 hover:bg-slate-200"
+          className="px-3 py-1.5 rounded-lg text-sm font-medium text-brand-navy bg-brand-surface hover:bg-brand-line/50"
         >
           ← 목록
         </button>
@@ -250,7 +250,7 @@ export function HistoryDetail() {
                   />
                 </>
               ) : (
-                <span className="text-slate-500">-</span>
+                <span className="text-brand-slate">-</span>
               )}
             </Section>
           </>

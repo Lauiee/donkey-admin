@@ -214,14 +214,14 @@ export function AdminLayout() {
   };
 
   return (
-    <div className="h-screen overflow-hidden bg-neutral-50 flex">
-      <aside className="w-60 h-screen bg-white border-r border-slate-200 flex flex-col shrink-0 shadow-sm overflow-y-auto">
-        <div className="h-14 px-4 flex items-center border-b border-slate-100">
-          <span className="font-semibold text-slate-800 tracking-tight">
+    <div className="h-screen overflow-hidden bg-brand-canvas flex">
+      <aside className="w-60 h-screen bg-white border-r border-brand-line flex flex-col shrink-0 shadow-admin-card overflow-y-auto">
+        <div className="h-14 px-4 flex items-center border-b border-brand-line/60">
+          <span className="font-semibold text-brand-ink tracking-tight">
             DONKEY
           </span>
         </div>
-        <nav className="p-3 flex flex-col gap-0.5 flex-1">
+        <nav className="p-3 flex flex-col gap-1 flex-1">
           {navItems
             .filter(
               (item) =>
@@ -236,7 +236,7 @@ export function AdminLayout() {
               disabled ? (
                 <span
                   key={to}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 cursor-not-allowed opacity-75"
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-full text-sm font-medium text-brand-mint cursor-not-allowed opacity-75"
                 >
                   {icon}
                   {label}
@@ -246,10 +246,10 @@ export function AdminLayout() {
                   key={to}
                   to={`${to}${search}`}
                   className={({ isActive }) =>
-                    `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                    `flex items-center gap-3 px-3 py-2.5 rounded-full text-sm font-medium transition-all ${
                       isActive
-                        ? "bg-indigo-50 text-indigo-700 border border-indigo-100"
-                        : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                        ? "bg-brand-accent text-brand-ink shadow-sm"
+                        : "text-brand-slate border border-transparent hover:border-brand-line hover:bg-brand-surface"
                     }`
                   }
                 >
@@ -259,17 +259,17 @@ export function AdminLayout() {
               )
             )}
         </nav>
-        <div className="p-3 border-t border-slate-100 space-y-1">
+        <div className="p-3 border-t border-brand-line/60 space-y-1">
           {remaining && (
             <>
-              <div className="px-3 py-2 rounded-lg bg-slate-50 text-xs text-slate-500 font-medium">
+              <div className="px-3 py-2 rounded-xl bg-brand-surface text-xs text-brand-slate font-medium">
                 {remaining}
               </div>
               <button
                 type="button"
                 onClick={handleExtend}
                 disabled={extending || remaining === "세션 만료됨"}
-                className="w-full py-2 rounded-lg text-xs font-medium text-indigo-600 hover:bg-indigo-50 disabled:opacity-50 disabled:pointer-events-none transition-colors"
+                className="w-full py-2 rounded-xl text-xs font-semibold text-brand-navy hover:bg-brand-accent/15 disabled:opacity-50 disabled:pointer-events-none transition-colors"
               >
                 {extending ? "연장 중..." : "시간 연장"}
               </button>
@@ -278,7 +278,7 @@ export function AdminLayout() {
           <button
             type="button"
             onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors"
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-full text-sm font-medium text-brand-slate hover:bg-brand-surface hover:text-brand-ink transition-colors"
           >
             <svg
               className="w-5 h-5 shrink-0"
@@ -297,8 +297,8 @@ export function AdminLayout() {
           </button>
         </div>
       </aside>
-      <main className="flex-1 min-h-0 overflow-auto bg-neutral-50">
-        <div className="p-8 max-w-6xl">
+      <main className="flex-1 min-h-0 overflow-auto bg-brand-canvas">
+        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
           <Outlet />
         </div>
       </main>

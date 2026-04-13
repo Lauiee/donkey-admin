@@ -11,7 +11,7 @@ interface ProjectSelectProps {
 const ProjectIcon = ({ active }: { active?: boolean }) => (
   <svg
     className={`w-4 h-4 shrink-0 ${
-      active ? "text-indigo-500" : "text-slate-400"
+      active ? "text-brand-accentDark" : "text-brand-mint"
     }`}
     fill="none"
     stroke="currentColor"
@@ -40,15 +40,15 @@ export function ProjectSelect({
   return (
     <div
       className={`
-        inline-flex items-center gap-2.5 pl-3 pr-2 py-2 rounded-lg
+        inline-flex items-center gap-2.5 pl-3 pr-2 py-2 rounded-xl
         border transition-all min-w-[160px]
         ${
           hasSelection
-            ? "border-indigo-200 bg-indigo-50/50"
-            : "border-slate-200 bg-white hover:border-slate-300"
+            ? "border-brand-accent/50 bg-brand-accent/10"
+            : "border-brand-line bg-white hover:border-brand-mint/50"
         }
-        focus-within:ring-2 focus-within:ring-indigo-500/25 focus-within:border-indigo-300
-        shadow-sm hover:shadow
+        focus-within:ring-2 focus-within:ring-brand-accent/30 focus-within:border-brand-accent
+        shadow-sm hover:shadow-admin-card
         ${className}
       `}
     >
@@ -60,10 +60,10 @@ export function ProjectSelect({
           appearance-none bg-transparent border-none outline-none
           text-sm font-medium min-w-0 flex-1 cursor-pointer
           focus:ring-0 py-0.5 pr-5
-          text-slate-700
+          text-brand-navy
         "
         style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
+          backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%235B6B95'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
           backgroundRepeat: "no-repeat",
           backgroundPosition: "right 0 center",
           backgroundSize: "1rem",

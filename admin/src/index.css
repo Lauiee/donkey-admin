@@ -3,24 +3,54 @@
 @tailwind utilities;
 
 :root {
-  --admin-accent: 99 102 241; /* indigo-500 */
-  --admin-accent-hover: 79 70 229; /* indigo-600 */
+  --brand-ink: #000000;
+  --brand-navy: #0a2465;
+  --brand-slate: #5b6b95;
+  --brand-mint: #7b8db8;
+  --brand-accent: #40e0d0;
+  --brand-accent-dark: #35b8aa;
+  --brand-canvas: #f4f7fa;
+  --brand-surface: #fafafa;
 }
 
 body {
   margin: 0;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-    "Helvetica Neue", Arial, sans-serif;
+  font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, "Helvetica Neue", Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background-color: var(--brand-canvas);
+  color: var(--brand-ink);
 }
 
-/* SaaS 스타일: 카드·입력 포커스 통일 */
 @layer components {
   .admin-card {
-    @apply bg-white rounded-xl border border-slate-200/80 shadow-sm;
+    @apply rounded-xl border border-brand-line bg-white shadow-admin-card;
   }
+
   .admin-page-title {
-    @apply text-2xl font-semibold text-slate-900 tracking-tight;
+    @apply text-2xl font-semibold text-brand-ink tracking-tight;
+  }
+  .admin-input {
+    @apply w-full rounded-xl border border-brand-line bg-white px-3.5 py-2.5 text-brand-ink placeholder:text-brand-mint/80 transition-shadow focus:border-transparent focus:outline-none focus:ring-2 focus:ring-brand-accent;
+  }
+  .admin-btn-primary {
+    @apply rounded-xl bg-brand-accent px-4 py-2.5 text-sm font-semibold text-brand-ink shadow-sm transition-all hover:bg-brand-accentDark focus:outline-none focus:ring-2 focus:ring-brand-accent focus:ring-offset-2 disabled:pointer-events-none disabled:opacity-50;
+  }
+  .admin-btn-secondary {
+    @apply rounded-xl border border-brand-line bg-white px-4 py-2.5 text-sm font-medium text-brand-navy transition-colors hover:bg-brand-surface;
+  }
+  .admin-link {
+    @apply font-medium text-brand-navy underline-offset-2 hover:text-brand-accent hover:underline;
+  }
+  /* 소제목: 장식 바 없이 구분선만 */
+  .admin-section-title {
+    @apply border-b border-brand-line pb-2 text-sm font-semibold text-brand-ink;
+  }
+  .admin-toolbar {
+    @apply admin-card mb-6 p-4 sm:p-5;
+  }
+  .admin-modal-backdrop {
+    @apply fixed inset-0 z-50 flex items-center justify-center bg-brand-navy/20 p-4 backdrop-blur-sm;
   }
 }

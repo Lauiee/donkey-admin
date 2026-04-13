@@ -2,8 +2,8 @@ import type { MetricTier } from "./metricGrades";
 import { TIER_LABEL } from "./metricGrades";
 
 const BG: Record<MetricTier, string> = {
-  excellent: "bg-emerald-100 text-emerald-900 ring-emerald-200",
-  medium: "bg-amber-100 text-amber-900 ring-amber-200",
+  excellent: "bg-brand-accent/25 text-brand-navy ring-brand-accent/40",
+  medium: "bg-brand-mint/30 text-brand-navy ring-brand-mint/45",
   poor: "bg-red-100 text-red-900 ring-red-200",
 };
 

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { getRole } from "../auth";
+import { PageHeader } from "../components/PageHeader";
 import { ProjectSelect } from "../components/ProjectSelect";
 import {
   createInquiry,
@@ -47,10 +48,10 @@ function statusLabel(s: string) {
 function statusColor(s: string) {
   const map: Record<string, string> = {
     pending: "bg-amber-100 text-amber-800",
-    in_progress: "bg-blue-100 text-blue-800",
-    completed: "bg-emerald-100 text-emerald-800",
+    in_progress: "bg-brand-mint/25 text-brand-navy",
+    completed: "bg-brand-accent/20 text-brand-navy",
   };
-  return map[s] ?? "bg-slate-100 text-slate-700";
+  return map[s] ?? "bg-brand-surface text-brand-navy";
 }
 
 export function Inquiry() {
@@ -208,36 +209,45 @@ export function Inquiry() {
 
   return (
     <div>
-      <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-        <div>
-          <h2 className="admin-page-title mb-2">문의</h2>
-          <p className="text-sm text-slate-500">
-            문의를 등록하거나 이전 문의 내역을 확인하세요.
-          </p>
-        </div>
-        {!isAdmin && (
-          <button
-            type="button"
-            onClick={() => {
-              setCreateModalOpen(true);
-              setCreateError(null);
-              setCreateTitle("");
-              setCreateBody("");
-              setCreateProjectId(selectedProject);
-              setCreateAttachmentUrls([]);
-              setCreateFiles([]);
-            }}
-            className="px-4 py-2 rounded-lg text-sm font-medium bg-indigo-600 text-white hover:bg-indigo-700 shrink-0"
-          >
-            새 문의
-          </button>
-        )}
-      </div>
+      <PageHeader
+        title="문의"
+        subtitle="문의를 등록하거나 이전 문의 내역을 확인하세요."
+        actions={
+          <>
+            {!isAdmin && (
+              <button
+                type="button"
+                onClick={() => {
+                  setCreateModalOpen(true);
+                  setCreateError(null);
+                  setCreateTitle("");
+                  setCreateBody("");
+                  setCreateProjectId(selectedProject);
+                  setCreateAttachmentUrls([]);
+                  setCreateFiles([]);
+                }}
+                className="admin-btn-primary shrink-0"
+              >
+                새 문의
+              </button>
+            )}
+            {projects.length > 0 && (
+              <ProjectSelect
+                value={selectedProject}
+                onChange={handleProjectChange}
+                projects={projects}
+                placeholder="전체 프로젝트"
+                className="shrink-0"
+              />
+            )}
+          </>
+        }
+      />
 
       {/* 문의 등록 모달 */}
       {createModalOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          className="admin-modal-backdrop"
           onClick={() => {
             if (fileInputActiveRef.current) return;
             if (!createSubmitting) setCreateModalOpen(false);
@@ -247,9 +257,9 @@ export function Inquiry() {
             className="admin-card w-full max-w-lg"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="p-5 border-b border-slate-100">
-              <h3 className="font-semibold text-slate-800">새 문의</h3>
-              <p className="text-sm text-slate-500 mt-0.5">
+            <div className="p-5 border-b border-brand-line/70">
+              <h3 className="font-semibold text-brand-ink">새 문의</h3>
+              <p className="text-sm text-brand-slate mt-0.5">
                 문의 내용을 입력해 주세요. 담당자가 확인 후 답변드립니다.
               </p>
             </div>
@@ -259,7 +269,7 @@ export function Inquiry() {
               )}
               {projects.length > 0 && (
                 <div>
-                  <label className="block text-sm font-medium text-slate-600 mb-1.5">
+                  <label className="block text-sm font-medium text-brand-slate mb-1.5">
                     프로젝트
                   </label>
                   <ProjectSelect
@@ -268,13 +278,13 @@ export function Inquiry() {
                     projects={projects}
                     placeholder="프로젝트 선택"
                   />
-                  <p className="text-xs text-slate-500 mt-1">
+                  <p className="text-xs text-brand-slate mt-1">
                     문의와 관련된 프로젝트를 선택하세요
                   </p>
                 </div>
               )}
               <div>
-                <label className="block text-sm font-medium text-slate-600 mb-1.5">
+                <label className="block text-sm font-medium text-brand-slate mb-1.5">
                   제목
                 </label>
                 <input
@@ -282,11 +292,11 @@ export function Inquiry() {
                   value={createTitle}
                   onChange={(e) => setCreateTitle(e.target.value)}
                   placeholder="문의 제목을 입력하세요"
-                  className="w-full px-4 py-2.5 rounded-lg border border-slate-200 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  className="w-full px-4 py-2.5 rounded-lg border border-brand-line text-sm text-brand-ink placeholder:text-brand-mint focus:outline-none focus:ring-2 focus:ring-brand-accent focus:border-transparent"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-600 mb-1.5">
+                <label className="block text-sm font-medium text-brand-slate mb-1.5">
                   첨부파일
                 </label>
                 <input
@@ -313,12 +323,12 @@ export function Inquiry() {
                     }, 1500);
                     fileInputRef.current?.click();
                   }}
-                  className="px-3 py-2 rounded-lg text-sm font-medium border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100"
+                  className="px-3 py-2 rounded-lg text-sm font-medium border border-brand-line bg-brand-surface text-brand-navy hover:bg-brand-surface"
                 >
                   파일 선택
                 </button>
                 {createFiles.length > 0 && (
-                  <ul className="mt-2 space-y-1 text-sm text-slate-600">
+                  <ul className="mt-2 space-y-1 text-sm text-brand-slate">
                     {createFiles.map((f, i) => (
                       <li key={i} className="flex items-center gap-2">
                         <span>{f.name}</span>
@@ -339,7 +349,7 @@ export function Inquiry() {
                 )}
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-600 mb-1.5">
+                <label className="block text-sm font-medium text-brand-slate mb-1.5">
                   내용
                 </label>
                 <textarea
@@ -347,16 +357,16 @@ export function Inquiry() {
                   onChange={(e) => setCreateBody(e.target.value)}
                   placeholder="문의 내용을 상세히 입력해 주세요"
                   rows={5}
-                  className="w-full px-4 py-2.5 rounded-lg border border-slate-200 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  className="w-full px-4 py-2.5 rounded-lg border border-brand-line text-sm text-brand-ink placeholder:text-brand-mint focus:outline-none focus:ring-2 focus:ring-brand-accent focus:border-transparent"
                 />
               </div>
             </div>
-            <div className="p-5 border-t border-slate-100 flex justify-end gap-2">
+            <div className="p-5 border-t border-brand-line/70 flex justify-end gap-2">
               <button
                 type="button"
                 onClick={() => !createSubmitting && setCreateModalOpen(false)}
                 disabled={createSubmitting}
-                className="px-4 py-2 rounded-lg text-sm font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 disabled:opacity-50"
+                className="px-4 py-2 rounded-lg text-sm font-medium text-brand-navy bg-brand-surface hover:bg-brand-line/50 disabled:opacity-50"
               >
                 취소
               </button>
@@ -369,7 +379,7 @@ export function Inquiry() {
                   !createTitle.trim() ||
                   !createBody.trim()
                 }
-                className="px-4 py-2 rounded-lg text-sm font-medium bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 disabled:pointer-events-none"
+                className="px-4 py-2 rounded-lg text-sm font-medium bg-brand-accent text-brand-ink hover:bg-brand-accentDark disabled:opacity-50 disabled:pointer-events-none"
               >
                 {createUploading
                   ? "업로드 중…"
@@ -382,26 +392,19 @@ export function Inquiry() {
         </div>
       )}
 
-      <div className="admin-card p-4 mb-6">
+      <div className="admin-toolbar">
+        <h3 className="admin-section-title mb-4">검색 및 필터</h3>
         <div className="flex flex-wrap items-center gap-3">
-          {projects.length > 0 && (
-            <ProjectSelect
-              value={selectedProject}
-              onChange={handleProjectChange}
-              projects={projects}
-              placeholder="전체 프로젝트"
-            />
-          )}
-          <div className="flex rounded-lg overflow-hidden border border-slate-200">
+          <div className="flex rounded-full border border-brand-line/90 bg-brand-surface p-0.5 shadow-[inset_0_1px_2px_rgba(10,36,101,0.06)]">
             {STATUS_OPTIONS.map((opt) => (
               <button
-                key={opt.value}
+                key={opt.value || "all"}
                 type="button"
                 onClick={() => handleStatusChange(opt.value)}
-                className={`px-3 py-2 text-sm font-medium transition-colors ${
+                className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-all ${
                   statusFilter === opt.value
-                    ? "bg-indigo-500 text-white"
-                    : "bg-white text-slate-600 hover:bg-slate-50"
+                    ? "bg-white text-brand-navy shadow-sm ring-1 ring-black/[0.06]"
+                    : "text-brand-slate hover:text-brand-navy"
                 }`}
               >
                 {opt.label}
@@ -414,12 +417,12 @@ export function Inquiry() {
             onChange={(e) => setSearchInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSearch()}
             placeholder="제목·내용 검색"
-            className="flex-1 min-w-[200px] px-3 py-2 rounded-lg border border-slate-200 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+            className="admin-input flex-1 min-w-[200px]"
           />
           <button
             type="button"
             onClick={handleSearch}
-            className="px-4 py-2 rounded-lg text-sm font-medium bg-slate-100 text-slate-700 hover:bg-slate-200"
+            className="admin-btn-secondary"
           >
             검색
           </button>
@@ -427,7 +430,7 @@ export function Inquiry() {
       </div>
 
       {loading ? (
-        <div className="admin-card p-8 text-slate-500">불러오는 중...</div>
+        <div className="admin-card p-8 text-brand-slate">불러오는 중...</div>
       ) : error ? (
         <div className="admin-card p-8 text-red-600">{error}</div>
       ) : (
@@ -435,7 +438,7 @@ export function Inquiry() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-slate-50 text-left text-slate-600">
+                <tr className="bg-brand-surface text-left text-brand-slate">
                   <th className="px-5 py-3 font-medium">상태</th>
                   <th className="px-5 py-3 font-medium">제목</th>
                   {projects.length > 0 && (
@@ -451,7 +454,7 @@ export function Inquiry() {
                   <tr>
                     <td
                       colSpan={projects.length > 0 ? 6 : 5}
-                      className="px-5 py-8 text-center text-slate-500"
+                      className="px-5 py-8 text-center text-brand-slate"
                     >
                       문의가 없습니다.
                     </td>
@@ -460,7 +463,7 @@ export function Inquiry() {
                   items.map((item) => (
                     <tr
                       key={item.id}
-                      className="border-t border-slate-100 hover:bg-slate-50/50"
+                      className="border-t border-brand-line/70 hover:bg-brand-surface/80"
                     >
                       <td className="px-5 py-3">
                         <span
@@ -472,30 +475,30 @@ export function Inquiry() {
                         </span>
                       </td>
                       <td
-                        className="px-5 py-3 text-slate-700 max-w-[280px] truncate"
+                        className="px-5 py-3 text-brand-navy max-w-[280px] truncate"
                         title={item.title}
                       >
                         {item.title || "(제목 없음)"}
                       </td>
                       {projects.length > 0 && (
-                        <td className="px-5 py-3 text-slate-600">
+                        <td className="px-5 py-3 text-brand-slate">
                           {item.project_id
                             ? projects.find((p) => p.id === item.project_id)
                                 ?.name ?? item.project_id
                             : "-"}
                         </td>
                       )}
-                      <td className="px-5 py-3 text-slate-600">
+                      <td className="px-5 py-3 text-brand-slate">
                         {item.author || "-"}
                       </td>
-                      <td className="px-5 py-3 text-slate-600">
+                      <td className="px-5 py-3 text-brand-slate">
                         {formatDate(item.created_at)}
                       </td>
                       <td className="px-5 py-3">
                         <button
                           type="button"
                           onClick={() => navigate(`/inquiry/${item.id}`)}
-                          className="px-3 py-1.5 rounded-lg text-sm font-medium text-slate-700 bg-slate-100 hover:bg-slate-200"
+                          className="px-3 py-1.5 rounded-lg text-sm font-medium text-brand-navy bg-brand-surface hover:bg-brand-line/50"
                         >
                           상세
                         </button>
@@ -507,8 +510,8 @@ export function Inquiry() {
             </table>
           </div>
           {totalPages > 1 && (
-            <div className="px-5 py-3 border-t border-slate-100 flex items-center justify-between">
-              <span className="text-sm text-slate-500">
+            <div className="px-5 py-3 border-t border-brand-line/70 flex items-center justify-between">
+              <span className="text-sm text-brand-slate">
                 전체 {total}건 ({(page - 1) * PAGE_SIZE + 1}–
                 {Math.min(page * PAGE_SIZE, total)})
               </span>
@@ -517,7 +520,7 @@ export function Inquiry() {
                   type="button"
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={page <= 1}
-                  className="px-3 py-1.5 rounded-lg text-sm font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 disabled:opacity-50 disabled:pointer-events-none"
+                  className="px-3 py-1.5 rounded-lg text-sm font-medium text-brand-navy bg-brand-surface hover:bg-brand-line/50 disabled:opacity-50 disabled:pointer-events-none"
                 >
                   이전
                 </button>
@@ -525,7 +528,7 @@ export function Inquiry() {
                   type="button"
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                   disabled={page >= totalPages}
-                  className="px-3 py-1.5 rounded-lg text-sm font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 disabled:opacity-50 disabled:pointer-events-none"
+                  className="px-3 py-1.5 rounded-lg text-sm font-medium text-brand-navy bg-brand-surface hover:bg-brand-line/50 disabled:opacity-50 disabled:pointer-events-none"
                 >
                   다음
                 </button>

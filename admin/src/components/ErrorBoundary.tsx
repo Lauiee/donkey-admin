@@ -23,18 +23,18 @@ export class ErrorBoundary extends Component<Props, State> {
   render() {
     if (this.state.hasError && this.state.error) {
       return (
-        <div className="min-h-screen bg-neutral-100 flex items-center justify-center p-8">
-          <div className="bg-white rounded-lg shadow p-6 max-w-lg">
-            <h1 className="text-lg font-semibold text-slate-800 mb-2">
+        <div className="min-h-screen bg-brand-canvas flex items-center justify-center p-8">
+          <div className="admin-card p-6 max-w-lg">
+            <h1 className="text-lg font-semibold text-brand-ink mb-2">
               오류가 발생했습니다
             </h1>
-            <p className="text-sm text-slate-600 mb-4 font-mono break-all">
+            <p className="text-sm text-brand-slate mb-4 font-mono break-all">
               {this.state.error.message}
             </p>
             <button
               type="button"
               onClick={() => this.setState({ hasError: false, error: null })}
-              className="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700"
+              className="admin-btn-primary"
             >
               다시 시도
             </button>
