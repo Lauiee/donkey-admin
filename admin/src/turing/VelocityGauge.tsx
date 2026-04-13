@@ -6,13 +6,16 @@ import {
   velocityGaugeLegend,
   velocityGaugeNeedleT,
   velocityGaugeTier,
-  velocityRawToDisplayScorePct,
 } from "./metricGrades";
+import { formatRawRatioAsPercent } from "./turingFormat";
 import {
-  TURING_PALETTE,
-  turingTierDotFill,
-  turingTierStroke,
-} from "./turingPalette";
+  TURING_GAUGE_GREEN,
+  TURING_GAUGE_ROSE,
+  TURING_GAUGE_TAN,
+  TURING_GAUGE_THUMB_LINE,
+  turingGaugeTierFill,
+} from "./turingGaugeTheme";
+import { TURING_PALETTE } from "./turingPalette";
 import { TierBadge } from "./TierBadge";
 import { TuringHoverDescription } from "./TuringHoverDescription";
 
@@ -35,7 +38,7 @@ export type VelocityGaugeProps = {
   value01: number;
 };
 
-/** 상단 반원 게이지 — Velocity 스펙 테이블 임계값으로 등급·색 구간 */
+/** 상단 반원 게이지 — 상세 지표 막대와 동일 색(세이지·탄·로즈), 임계는 metricGrades */
 export function VelocityGauge(props: VelocityGaugeProps) {
   const filterId = useId().replace(/:/g, "");
   const { variant, title, metricDescription, value01: raw } = props;
@@ -66,17 +69,15 @@ export function VelocityGauge(props: VelocityGaugeProps) {
   const tier = velocityGaugeTier(variant, v);
   const legendRows = velocityGaugeLegend(variant);
   const needleT = clamp01(velocityGaugeNeedleT(variant, v));
-  const { tPoorEnd, tMediumEnd } = velocityGaugeArcSplits(variant);
-  const displayPct = velocityRawToDisplayScorePct(v);
+  const { tExcellentEnd, tMediumEnd } = velocityGaugeArcSplits(variant);
   const needleAngle = Math.PI * (1 - needleT);
-  /** 호의 반지름(r)까지 — 너무 짧으면(r-4) 색 띠에 묻히고, 너무 길면 튀어 보임 */
   const needleLen = r;
   const nx = cx + needleLen * Math.cos(needleAngle);
   const ny = cy - needleLen * Math.sin(needleAngle);
 
   return (
-    <div className="admin-card p-5 flex flex-col items-center">
-      <div className="w-full flex items-center justify-center gap-2 mb-1 min-h-[1.5rem]">
+    <div className="admin-card flex flex-col items-center p-5">
+      <div className="mb-1 flex min-h-[1.5rem] w-full items-center justify-center gap-2">
         {metricDescription ? (
           <TuringHoverDescription
             label={title}
@@ -84,7 +85,7 @@ export function VelocityGauge(props: VelocityGaugeProps) {
             className="text-center text-sm font-medium text-brand-ink"
           />
         ) : (
-          <span className="text-sm font-medium text-brand-ink text-center">
+          <span className="text-center text-sm font-medium text-brand-ink">
             {title}
           </span>
         )}
@@ -101,34 +102,36 @@ export function VelocityGauge(props: VelocityGaugeProps) {
         h={h}
         nx={nx}
         ny={ny}
-        tPoorEnd={tPoorEnd}
+        tExcellentEnd={tExcellentEnd}
         tMediumEnd={tMediumEnd}
       />
-      <p className="text-2xl font-semibold text-brand-ink tabular-nums -mt-1">
-        {displayPct}%
+      <p className="-mt-1 text-2xl font-semibold tabular-nums text-brand-ink">
+        {formatRawRatioAsPercent(v)}
       </p>
       <div className="mt-2">
         <TierBadge tier={tier} palette="turing" />
       </div>
-      <div className="mt-3 w-full max-w-[240px] rounded-lg border border-brand-line bg-brand-canvas px-3 py-2.5">
-        <ul className="space-y-1.5 text-left">
+      <div className="mt-4 w-full max-w-[260px] border-t border-b border-brand-line/40 py-2.5">
+        <ul className="m-0 list-none space-y-2.5 p-0">
           {legendRows.map((row) => (
-            <li key={row.tier} className="flex gap-2 text-[11px] leading-snug">
+            <li
+              key={row.tier}
+              className="flex items-start gap-2 text-[10px] leading-snug"
+            >
               <span
-                className="mt-1.5 h-2 w-2 shrink-0 rounded-full ring-1 ring-white/80"
-                style={{ backgroundColor: turingTierDotFill(row.tier) }}
+                className="mt-0.5 h-2 w-2 shrink-0 rounded-full ring-1 ring-white/90"
+                style={{ backgroundColor: turingGaugeTierFill(row.tier) }}
                 aria-hidden
               />
-              <span>
+              <span className="min-w-0 flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5">
                 <span
-                  className="font-semibold"
-                  style={{ color: turingTierStroke(row.tier) }}
+                  className="rounded-md px-1.5 py-0.5 text-[10px] font-semibold leading-none text-brand-navy ring-1 ring-white/70"
+                  style={{ backgroundColor: `${turingGaugeTierFill(row.tier)}33` }}
                 >
                   {TIER_LABEL[row.tier]}
                 </span>
-                <span style={{ color: TURING_PALETTE.secondary.slateBlue }}>
-                  {" "}
-                  — {row.description}
+                <span className="font-medium tabular-nums text-brand-navy">
+                  {row.description}
                 </span>
               </span>
             </li>
@@ -151,7 +154,7 @@ function GaugeSvg({
   h,
   nx,
   ny,
-  tPoorEnd,
+  tExcellentEnd,
   tMediumEnd,
 }: {
   filterId: string;
@@ -165,16 +168,15 @@ function GaugeSvg({
   h: number;
   nx: number;
   ny: number;
-  /** 점수 t 기준: 미흡 구간 [0, tPoorEnd) */
-  tPoorEnd: number;
-  /** 보통 구간 [tPoorEnd, tMediumEnd), 우수 [tMediumEnd, 1] */
+  tExcellentEnd: number;
   tMediumEnd: number;
 }) {
-  const showPoorArc = tPoorEnd > 1e-6;
+  const showExcellentArc = tExcellentEnd > 1e-6;
+  const tickStroke = "rgba(10, 36, 101, 0.22)";
   return (
     <svg
       viewBox={`0 0 ${w} ${h}`}
-      className="w-full max-w-[220px] h-auto"
+      className="h-auto w-full max-w-[220px]"
       aria-hidden
     >
       <defs>
@@ -185,23 +187,23 @@ function GaugeSvg({
           width="160%"
           height="160%"
         >
-          <feDropShadow dx="0" dy="1" stdDeviation="1.2" floodOpacity="0.15" />
+          <feDropShadow dx="0" dy="1" stdDeviation="1.2" floodOpacity="0.12" />
         </filter>
       </defs>
-      {showPoorArc && (
+      {showExcellentArc && (
         <path
-          d={arcPath(0, tPoorEnd)}
+          d={arcPath(0, tExcellentEnd)}
           fill="none"
-          stroke={turingTierStroke("poor")}
+          stroke={TURING_GAUGE_GREEN}
           strokeWidth={stroke}
           strokeLinecap="round"
-          opacity={0.92}
+          opacity={0.95}
         />
       )}
       <path
-        d={arcPath(showPoorArc ? tPoorEnd : 0, tMediumEnd)}
+        d={arcPath(showExcellentArc ? tExcellentEnd : 0, tMediumEnd)}
         fill="none"
-        stroke={turingTierStroke("medium")}
+        stroke={TURING_GAUGE_TAN}
         strokeWidth={stroke}
         strokeLinecap="round"
         opacity={0.95}
@@ -209,10 +211,10 @@ function GaugeSvg({
       <path
         d={arcPath(tMediumEnd, 1)}
         fill="none"
-        stroke={turingTierStroke("excellent")}
+        stroke={TURING_GAUGE_ROSE}
         strokeWidth={stroke}
         strokeLinecap="round"
-        opacity={0.95}
+        opacity={0.92}
       />
       {[0, 0.2, 0.4, 0.6, 0.8, 1].map((t) => {
         const outer = polar(t);
@@ -227,8 +229,7 @@ function GaugeSvg({
             y1={iy}
             x2={outer.x}
             y2={outer.y}
-            stroke={TURING_PALETTE.secondary.slateBlue}
-            opacity={0.45}
+            stroke={tickStroke}
             strokeWidth={1.5}
           />
         );
@@ -238,7 +239,7 @@ function GaugeSvg({
         y1={cy}
         x2={nx}
         y2={ny}
-        stroke={TURING_PALETTE.accent}
+        stroke={TURING_GAUGE_THUMB_LINE}
         strokeWidth={2.5}
         strokeLinecap="round"
         filter={`url(#g-sh-${filterId})`}

@@ -66,6 +66,28 @@ export const STT_METRIC_DESCRIPTIONS: readonly string[] = [
   "비정상적 반복 (모델 오류로 인한 반복) 비율",
 ];
 
+/** 카드 상단 메타 — STT_RADAR_LIST_LABELS 와 동일 순서 */
+export const STT_METRIC_SLUGS: readonly string[] = [
+  "STT_VELOCITY",
+  "UER",
+  "PII_PROTECTION",
+  "MMR",
+  "MDR",
+  "DIARIZATION",
+  "REDUNDANCY",
+];
+
+/** SUMMARY_RADAR_LIST_LABELS 와 동일 순서 */
+export const SUMMARY_METRIC_SLUGS: readonly string[] = [
+  "SUMMARY_VELOCITY",
+  "HALLUCINATION",
+  "SSR",
+  "ICR",
+  "MDR",
+  "MIR",
+  "SSA",
+];
+
 /** SUMMARY_RADAR_LIST_LABELS 와 동일 순서 */
 export const SUMMARY_METRIC_DESCRIPTIONS: readonly string[] = [
   "요약 처리 속도",

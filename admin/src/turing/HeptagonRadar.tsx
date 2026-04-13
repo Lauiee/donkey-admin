@@ -1,11 +1,12 @@
 import { useId, useRef, useState } from "react";
-import { type MetricTier, velocityRawToDisplayScorePct } from "./metricGrades";
+import { type MetricTier } from "./metricGrades";
 import { TierBadge } from "./TierBadge";
 import {
   DescriptionTooltipPortal,
   TuringHoverDescription,
 } from "./TuringHoverDescription";
 import { TURING_PALETTE, turingTierDotFill } from "./turingPalette";
+import { formatMetricValue } from "./turingFormat";
 
 type Props = {
   title: string;
@@ -37,14 +38,6 @@ const N = 7;
 
 function angleAt(i: number): number {
   return -Math.PI / 2 + (2 * Math.PI * i) / N;
-}
-
-function formatPercent(v: number): string {
-  return `${Math.round(clamp01(v) * 1000) / 10}%`;
-}
-
-function formatInvertedPercent(v: number): string {
-  return `${velocityRawToDisplayScorePct(v)}%`;
 }
 
 export function HeptagonRadar({
@@ -223,14 +216,11 @@ export function HeptagonRadar({
           const tier = tiers[i] ?? "neutral";
           const rawSec = secondsValues?.[i];
           const val = values[i];
-          const display =
-            val === null
-              ? "—"
-              : fmt[i] === "seconds" && rawSec != null
-                ? `${rawSec < 100 ? rawSec.toFixed(1) : rawSec.toFixed(0)}초`
-                : fmt[i] === "invertedPercent"
-                  ? formatInvertedPercent(val)
-                  : formatPercent(val);
+          const display = formatMetricValue(
+            val,
+            fmt[i] ?? "percent",
+            rawSec
+          );
 
           return (
             <li key={`${label}-${i}`}>

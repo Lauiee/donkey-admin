@@ -68,32 +68,110 @@ export const VELOCITY_GAUGE = {
 export type VelocityGaugeKind = keyof typeof VELOCITY_GAUGE;
 
 /**
- * 원시 비율(낮을수록 좋음) → 표시 점수 % (100 − 원시%, 0~100 클램프).
- * Velocity 게이지·속도 행·바늘 위치에 동일 기준 사용.
+ * 원시 비율(낮을수록 좋음) → 점수 0~100 (100 − 원시%).
+ * 반원 게이지는 `v/vmax` 축 사용 — 화면 숫자는 `formatRawRatioAsPercent` 로 원시 % 표기.
  */
 export function velocityRawToDisplayScorePct(v: number): number {
   const rawPct = Math.round(Math.max(0, v) * 1000) / 10;
   return Math.round(Math.min(100, Math.max(0, 100 - rawPct)) * 10) / 10;
 }
 
-function formatLegendScorePct(n: number): string {
-  const p = Math.round(n * 10) / 10;
-  return `${p}%`;
+function rawRatioPctLabel(ratio: number): string {
+  return `${Math.round(ratio * 1000) / 10}%`;
 }
 
-/** Velocity 범례 — 표시 점수 % (100 − 원시 비율) 구간 */
+function thresholdLegendLower(ex: number, md: number): Array<{
+  tier: MetricTier;
+  condition: string;
+}> {
+  const a = rawRatioPctLabel(ex);
+  const b = rawRatioPctLabel(md);
+  return [
+    { tier: "excellent", condition: `x < ${a}` },
+    { tier: "medium", condition: `${a} ≤ x < ${b}` },
+    { tier: "poor", condition: `x ≥ ${b}` },
+  ];
+}
+
+function thresholdLegendHigher(ex: number, md: number): Array<{
+  tier: MetricTier;
+  condition: string;
+}> {
+  const a = rawRatioPctLabel(ex);
+  const b = rawRatioPctLabel(md);
+  return [
+    { tier: "excellent", condition: `x > ${a}` },
+    { tier: "medium", condition: `${b} < x ≤ ${a}` },
+    { tier: "poor", condition: `x ≤ ${b}` },
+  ];
+}
+
+/** STT 상세 지표 순서 — `tiersForSttRadar` 와 동일 */
+export function sttMetricThresholdLegendRows(index: number): Array<{
+  tier: MetricTier;
+  condition: string;
+}> {
+  const { excellentLt: sttEx, mediumLt: sttMd } = VELOCITY_GAUGE.stt;
+  switch (index) {
+    case 0:
+      return thresholdLegendLower(sttEx, sttMd);
+    case 1:
+      return thresholdLegendLower(0.05, 0.15);
+    case 2:
+      return thresholdLegendHigher(0.9, 0.5);
+    case 3:
+      return thresholdLegendLower(0.1, 0.3);
+    case 4:
+      return thresholdLegendLower(0.1, 0.3);
+    case 5:
+      return thresholdLegendHigher(0.8, 0.5);
+    case 6:
+      return thresholdLegendLower(0.05, 0.15);
+    default:
+      return thresholdLegendLower(0, 1);
+  }
+}
+
+/** Summary 상세 지표 순서 — `tiersForSummaryRadar` 와 동일 */
+export function summaryMetricThresholdLegendRows(index: number): Array<{
+  tier: MetricTier;
+  condition: string;
+}> {
+  const { excellentLt: sumEx, mediumLt: sumMd } = VELOCITY_GAUGE.summarization;
+  switch (index) {
+    case 0:
+      return thresholdLegendLower(sumEx, sumMd);
+    case 1:
+      return thresholdLegendLower(0.1, 0.3);
+    case 2:
+      return thresholdLegendHigher(0.7, 0.4);
+    case 3:
+      return [
+        { tier: "excellent", condition: `x < ${rawRatioPctLabel(0.5)}` },
+        { tier: "medium", condition: `x ≥ ${rawRatioPctLabel(0.5)}` },
+      ];
+    case 4:
+      return thresholdLegendLower(0.1, 0.3);
+    case 5:
+      return thresholdLegendHigher(0.7, 0.4);
+    case 6:
+      return thresholdLegendHigher(0.7, 0.4);
+    default:
+      return thresholdLegendLower(0, 1);
+  }
+}
+
+/** Velocity 범례 — 원시 비율을 %로 표기한 임계 구간 (낮을수록 좋음) */
 export function velocityGaugeLegend(
   kind: VelocityGaugeKind
 ): Array<{ tier: MetricTier; description: string }> {
   const { excellentLt, mediumLt } = VELOCITY_GAUGE[kind];
-  const hi = 100 - excellentLt * 100;
-  const lo = 100 - mediumLt * 100;
-  const hiS = formatLegendScorePct(hi);
-  const loS = formatLegendScorePct(lo);
+  const a = rawRatioPctLabel(excellentLt);
+  const b = rawRatioPctLabel(mediumLt);
   return [
-    { tier: "excellent", description: `${hiS} 초과` },
-    { tier: "medium", description: `${loS} 초과 ~ ${hiS} 이하` },
-    { tier: "poor", description: `${loS} 이하` },
+    { tier: "excellent", description: `x < ${a}` },
+    { tier: "medium", description: `${a} ≤ x < ${b}` },
+    { tier: "poor", description: `x ≥ ${b}` },
   ];
 }
 
@@ -103,24 +181,26 @@ export function velocityGaugeTier(kind: VelocityGaugeKind, v: number): MetricTie
 }
 
 /**
- * 반원 위 바늘 t∈[0,1] — 표시 점수가 클수록 오른쪽(높을수록 좋음).
- * 원시 v는 스펙 그대로 넣고, 내부에서 점수%로 변환.
+ * 반원 바늘 t∈[0,1] — 화면 `formatRawRatioAsPercent`와 같은 축(원시 비율).
+ * 낮은 %일수록 왼쪽, 높을수록 오른쪽. 스케일은 종류별 `vmax`.
  */
-export function velocityGaugeNeedleT(_kind: VelocityGaugeKind, v: number): number {
-  return clamp(velocityRawToDisplayScorePct(v) / 100, 0, 1);
+export function velocityGaugeNeedleT(kind: VelocityGaugeKind, v: number): number {
+  const { vmax } = VELOCITY_GAUGE[kind];
+  return clamp(v / vmax, 0, 1);
 }
 
 /**
- * 반원 색 구간 (좌→미흡, 우→우수) — t는 점수 기준 0~1, 클수록 오른쪽·우수.
+ * 반원 색 구간 — t = v/vmax 와 동일. 좌=낮은 원시%(우수·초록), 우=높은 원시%(미흡·로즈).
  */
 export function velocityGaugeArcSplits(kind: VelocityGaugeKind): {
-  tPoorEnd: number;
+  tExcellentEnd: number;
   tMediumEnd: number;
 } {
-  const { excellentLt, mediumLt } = VELOCITY_GAUGE[kind];
-  const tPoorEnd = clamp(velocityRawToDisplayScorePct(mediumLt) / 100, 0, 1);
-  const tMediumEnd = clamp(velocityRawToDisplayScorePct(excellentLt) / 100, 0, 1);
-  return { tPoorEnd, tMediumEnd };
+  const { excellentLt, mediumLt, vmax } = VELOCITY_GAUGE[kind];
+  return {
+    tExcellentEnd: clamp(excellentLt / vmax, 0, 1),
+    tMediumEnd: clamp(mediumLt / vmax, 0, 1),
+  };
 }
 
 export function gradeProcessingVelocity(v: number): MetricTier {
