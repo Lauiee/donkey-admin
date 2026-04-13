@@ -1,12 +1,20 @@
 import type { EvaluationListItemApi } from "./turingApi";
 import {
+  gradeDiarizationAccuracy,
   gradeHallucinationRatio,
   gradeIcr,
   gradeMir,
+  gradeMmr,
+  gradePiiProtection,
+  gradeProcessingVelocity,
+  gradeRedundancyRatio,
   gradeSsa,
+  gradeSttMdr,
+  gradeSttVelocityRatio,
   gradeSummaryMdr,
   gradeSummarizationVelocity,
   gradeSsr,
+  gradeUer,
   type MetricTier,
 } from "./metricGrades";
 
@@ -42,6 +50,90 @@ function avgNullable(values: (number | null | undefined)[]): number | null {
   const nums = values.filter((v): v is number => v != null && !Number.isNaN(v));
   if (nums.length === 0) return null;
   return avg(nums);
+}
+
+function tierToHealthScore(tier: MetricTier): number {
+  if (tier === "excellent") return 1.0; // good
+  if (tier === "medium") return 0.5; // ok
+  return 0.0; // bad
+}
+
+/**
+ * Health Score (0~100)
+ * - good=1.0 / ok=0.5 / bad=0.0
+ * - critical(3): pii_protection, hallucination_ratio, mdr, summary_mdr
+ * - default(1): 나머지 지표
+ */
+function healthScoreFromItem(item: EvaluationListItemApi): number {
+  const { metrics } = item;
+
+  const weighted: Array<{ value: number; weight: number }> = [
+    // default(1)
+    { value: tierToHealthScore(gradeProcessingVelocity(metrics.processing_velocity)), weight: 1 },
+    { value: tierToHealthScore(gradeSttVelocityRatio(metrics.stt.stt_velocity)), weight: 1 },
+    { value: tierToHealthScore(gradeUer(metrics.stt.uer)), weight: 1 },
+    { value: tierToHealthScore(gradeMmr(metrics.stt.mmr)), weight: 1 },
+    { value: tierToHealthScore(gradeDiarizationAccuracy(metrics.stt.diarization_accuracy)), weight: 1 },
+    { value: tierToHealthScore(gradeRedundancyRatio(metrics.stt.redundancy_ratio)), weight: 1 },
+    {
+      value: tierToHealthScore(
+        metrics.summary.summarization_velocity == null
+          ? "poor"
+          : gradeSummarizationVelocity(metrics.summary.summarization_velocity)
+      ),
+      weight: 1,
+    },
+    {
+      value: tierToHealthScore(
+        metrics.summary.ssr == null ? "poor" : gradeSsr(metrics.summary.ssr)
+      ),
+      weight: 1,
+    },
+    {
+      value: tierToHealthScore(
+        metrics.summary.icr == null
+          ? "poor"
+          : (gradeIcr(metrics.summary.icr) as MetricTier)
+      ),
+      weight: 1,
+    },
+    {
+      value: tierToHealthScore(
+        metrics.summary.mir == null ? "poor" : gradeMir(metrics.summary.mir)
+      ),
+      weight: 1,
+    },
+    {
+      value: tierToHealthScore(
+        metrics.summary.ssa == null ? "poor" : gradeSsa(metrics.summary.ssa)
+      ),
+      weight: 1,
+    },
+
+    // critical(3)
+    { value: tierToHealthScore(gradePiiProtection(metrics.stt.pii_protection)), weight: 3 },
+    { value: tierToHealthScore(gradeSttMdr(metrics.stt.mdr)), weight: 3 },
+    {
+      value: tierToHealthScore(
+        metrics.summary.hallucination_ratio == null
+          ? "poor"
+          : gradeHallucinationRatio(metrics.summary.hallucination_ratio)
+      ),
+      weight: 3,
+    },
+    {
+      value: tierToHealthScore(
+        metrics.summary.summary_mdr == null
+          ? "poor"
+          : gradeSummaryMdr(metrics.summary.summary_mdr)
+      ),
+      weight: 3,
+    },
+  ];
+
+  const num = weighted.reduce((acc, x) => acc + x.value * x.weight, 0);
+  const den = weighted.reduce((acc, x) => acc + x.weight, 0); // 23
+  return Math.round((num / den) * 100);
 }
 
 /** 목록 응답 items → 평균 지표 + 건당 추이용 점수 */
@@ -90,12 +182,8 @@ export function aggregateEvaluationItems(
     },
   };
 
-  /** 건당 종합: 처리 속도 기반 품질 스코어 0~1 (높을수록 좋음) — 1/(1+pv) */
-  const perCaseComposite = sorted.map((x) => {
-    const pv = x.metrics.processing_velocity;
-    if (pv <= 0) return 0;
-    return Math.min(1, 1 / (1 + pv));
-  });
+  /** 건당 종합: Health Score 0~100 */
+  const perCaseComposite = sorted.map((x) => healthScoreFromItem(x));
 
   return {
     demo,
