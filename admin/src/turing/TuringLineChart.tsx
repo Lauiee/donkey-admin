@@ -61,6 +61,9 @@ export function TuringLineChart({
     <div className="admin-card flex min-h-[280px] flex-col overflow-hidden">
       <div className="px-5 pt-5">
         <h4 className="text-sm font-semibold text-brand-navy">{title}</h4>
+        <p className="mt-1 text-[11px] text-brand-slate/72">
+          전체 품질을 종합적으로 보여주는 지표 점수입니다.
+        </p>
       </div>
       <div className="mt-3 w-full min-w-0 flex-1">
         <svg
