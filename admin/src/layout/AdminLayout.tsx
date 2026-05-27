@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import { Outlet, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { getMe, refreshSession } from "../api";
+import { BrandLogo } from "../components/BrandLogo";
 import {
   clearToken,
   getRole,
@@ -217,9 +218,7 @@ export function AdminLayout() {
     <div className="font-sans h-screen overflow-hidden bg-transparent flex">
       <aside className="w-60 h-screen flex shrink-0 flex-col overflow-y-auto rounded-r-3xl border-r border-brand-line/80 bg-white/95 shadow-admin-sidebar backdrop-blur-sm">
         <div className="flex h-14 items-center border-b border-brand-line/60 bg-gradient-to-r from-brand-violet/[0.06] via-white to-brand-accent/[0.05] px-4">
-          <span className="bg-gradient-to-r from-brand-navy to-brand-violet bg-clip-text font-bold tracking-tight text-transparent">
-            DONKEY
-          </span>
+          <BrandLogo className="text-xl" />
         </div>
         <nav className="p-3 flex flex-col gap-1 flex-1">
           {navItems

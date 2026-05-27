@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getRole, isDevAuthBypass, setRole, setToken } from "../auth";
 import { getMe, login } from "../api";
+import { BrandLogo } from "../components/BrandLogo";
 
 export function Login() {
   const navigate = useNavigate();
@@ -45,7 +46,9 @@ export function Login() {
   return (
     <div className="min-h-screen bg-brand-canvas flex items-center justify-center p-4">
       <div className="w-full max-w-md admin-card p-8">
-        <h1 className="admin-page-title mb-1">DONKEY 관리자</h1>
+        <h1 className="admin-page-title mb-1">
+          <BrandLogo /> 관리자
+        </h1>
         <p className="text-sm text-brand-slate mb-8">로그인하여 계속하세요.</p>
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>

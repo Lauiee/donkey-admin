@@ -324,38 +324,53 @@ export function gradeCsrTurnRatio(v: number): MetricTier {
   return "poor";
 }
 
+export type MetricGaugeSpec =
+  | { dir: "lower"; ex: number; md: number } // 낮을수록 좋음: 우수<ex, 보통<md, 그외 미흡
+  | { dir: "higher"; ex: number; md: number } // 높을수록 좋음: 우수>ex, 보통>md, 그외 미흡
+  | { dir: "lowerNoPoor"; ex: number } // 우수<ex, 그외 보통 (미흡 없음 — ICR)
+  | { dir: "band"; exLo: number; exHi: number; mdLo: number; mdHi: number }; // 적정 구간
+
+/**
+ * CS 상세 지표 slug → 등급 임계 스펙 (단일 출처).
+ * 등급 배지·하단 임계 범례·게이지 막대 트랙 색이 모두 이 값을 사용 → 항상 일치.
+ */
+export const METRIC_SPECS: Record<string, MetricGaugeSpec> = {
+  UER: { dir: "lower", ex: 0.05, md: 0.15 },
+  CKM: { dir: "lower", ex: 0.1, md: 0.3 },
+  CKD: { dir: "lower", ex: 0.1, md: 0.3 },
+  DIARIZATION: { dir: "higher", ex: 0.8, md: 0.5 },
+  REDUNDANCY: { dir: "lower", ex: 0.05, md: 0.15 },
+  HR: { dir: "lower", ex: 0.1, md: 0.3 },
+  SSR: { dir: "higher", ex: 0.7, md: 0.4 },
+  ICR: { dir: "lowerNoPoor", ex: 0.5 },
+  CIR: { dir: "higher", ex: 0.7, md: 0.4 },
+  SSA: { dir: "higher", ex: 0.7, md: 0.4 },
+  KCR: { dir: "higher", ex: 0.7, md: 0.4 },
+  IDR: { dir: "higher", ex: 0.7, md: 0.4 },
+  AC: { dir: "higher", ex: 0.7, md: 0.4 },
+  RRS: { dir: "higher", ex: 0.7, md: 0.4 },
+  CSR_TURN: { dir: "band", exLo: 0.25, exHi: 0.5, mdLo: 0.15, mdHi: 0.65 },
+};
+
 /** CS 지표 slug → 등급. (값이 null 인 경우는 호출 측에서 neutral 처리) */
 export function gradeMetricBySlug(slug: string, v: number): MetricTier {
-  switch (slug) {
-    case "UER":
-      return gradeUer(v);
-    case "CKM": // CS Keyword Miss (구 MMR)
-      return gradeMmr(v);
-    case "CKD": // CS Keyword Distortion (구 MDR/summary_mdr)
-      return gradeSttMdr(v);
-    case "DIARIZATION":
-      return gradeDiarizationAccuracy(v);
-    case "REDUNDANCY":
-      return gradeRedundancyRatio(v);
-    case "HR":
-      return gradeHallucinationRatio(v);
-    case "SSR":
-      return gradeSsr(v);
-    case "ICR":
-      return gradeIcr(v) as MetricTier;
-    case "CIR": // CS Information Recall (구 MIR)
-      return gradeMir(v);
-    case "SSA":
-      return gradeSsa(v);
-    case "KCR":
-    case "IDR":
-    case "AC":
-    case "RRS":
-      return tierHigherIsBetter(v, 0.7, 0.4);
-    case "CSR_TURN":
-      return gradeCsrTurnRatio(v);
-    default:
-      return tierHigherIsBetter(v, 0.5, 0.25);
+  const spec = METRIC_SPECS[slug];
+  if (!spec) return tierHigherIsBetter(v, 0.5, 0.25);
+  switch (spec.dir) {
+    case "lower":
+      return tierLowerIsBetter(v, spec.ex, spec.md);
+    case "higher":
+      return tierHigherIsBetter(v, spec.ex, spec.md);
+    case "lowerNoPoor":
+      return v < spec.ex ? "excellent" : "medium";
+    case "band":
+      if (v >= spec.exLo && v <= spec.exHi) return "excellent";
+      if (
+        (v >= spec.mdLo && v < spec.exLo) ||
+        (v > spec.exHi && v <= spec.mdHi)
+      )
+        return "medium";
+      return "poor";
   }
 }
 

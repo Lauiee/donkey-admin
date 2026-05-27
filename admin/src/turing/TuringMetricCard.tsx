@@ -8,6 +8,7 @@ import {
 import { TierBadge } from "./TierBadge";
 import {
   gaugeTrackCssBackground,
+  metricGaugeTrackBySlug,
   TURING_GAUGE_THUMB_LINE,
   turingGaugeTierFill,
   type TuringGaugeRowFormat,
@@ -311,6 +312,9 @@ export function TuringMetricCard({
 }) {
   const hint = directionHint(rowFormat);
   const showGauge = !unsupported && thumbPosition01 !== null;
+  // 막대 색 구간을 지표별 실제 임계값에 맞춤 (등급 배지와 일치). 스펙 없으면 rowFormat 기본 트랙.
+  const trackBackground =
+    metricGaugeTrackBySlug(metricSlug) ?? gaugeTrackCssBackground(rowFormat);
 
   return (
     <div
@@ -368,7 +372,7 @@ export function TuringMetricCard({
           <div className="relative py-1">
             <div
               className="relative h-2 w-full rounded-full ring-1 ring-black/[0.08]"
-              style={{ background: gaugeTrackCssBackground(rowFormat) }}
+              style={{ background: trackBackground }}
             >
               {showGauge ? (
                 <span
