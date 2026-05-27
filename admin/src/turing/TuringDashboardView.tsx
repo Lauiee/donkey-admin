@@ -90,6 +90,18 @@ const SAMP = {
 
 const PER_CASE_COMPOSITE_FALLBACK = [63, 61, 66, 64, 62, 63, 67, 65, 64, 66];
 
+/** 엑셀에서 하늘색으로 표시된 CS 도메인 특화 지표 slug (카드 하늘색 강조 대상) */
+const CS_SPECIAL_SLUGS = new Set([
+  "CKM",
+  "CKD",
+  "CIR",
+  "KCR",
+  "IDR",
+  "AC",
+  "RRS",
+  "CSR_TURN",
+]);
+
 /**
  * 목업 데모 데이터. 등급 분포 의도: 대부분 우수 / 약 1/3 보통 / 미흡은 HR 단 하나.
  * (상세 16개 카드 기준 우수 10 · 보통 5 · 미흡 1, Velocity 포함 시 우수 12 · 보통 6 · 미흡 1)
@@ -451,7 +463,7 @@ export function TuringDashboardView({
     [items]
   );
 
-  // CS 도메인 상세 지표(엑셀 v0.2) — 모든 지표를 동일한 형식으로 표시(별도 강조/범례 없음).
+  // CS 도메인 상세 지표(엑셀 v0.2) — 전체 표시, CS 특화(하늘색)는 카드에서 강조.
   const csDetailItems = useMemo<TuringMetricGridItem[]>(
     () =>
       CS_DETAIL_METRICS.map((m) => {
@@ -477,6 +489,7 @@ export function TuringDashboardView({
           thresholdLegendRows: metricThresholdLegendBySlug(m.slug),
           unsupported,
           trendSeries,
+          csSpecial: CS_SPECIAL_SLUGS.has(m.slug),
         };
       }),
     [demo, sttMetricTrendSeries, summaryMetricTrendSeries]
@@ -630,7 +643,22 @@ export function TuringDashboardView({
             />
           </div>
         ) : (
-          <TuringMetricGrid items={csDetailItems} />
+          <>
+            <div className="mb-4 flex items-center gap-2 rounded-lg border border-sky-200 bg-sky-50/70 px-3 py-2 text-xs text-brand-navy">
+              <span
+                className="h-3 w-3 shrink-0 rounded-sm bg-sky-200 ring-1 ring-sky-300"
+                aria-hidden
+              />
+              <span>
+                하늘색으로 표시된 항목은{" "}
+                <strong className="font-semibold text-sky-700">
+                  CS 도메인 특화 지표
+                </strong>
+                입니다.
+              </span>
+            </div>
+            <TuringMetricGrid items={csDetailItems} />
+          </>
         )}
       </section>
 
