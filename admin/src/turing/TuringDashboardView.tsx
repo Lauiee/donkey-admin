@@ -3,14 +3,24 @@ import { Link } from "react-router-dom";
 import { PageHeader } from "../components/PageHeader";
 import { HeptagonRadar } from "./HeptagonRadar";
 import {
+  gradeMetricBySlug,
   higherRatioToRadius01,
   lowerRatioToRadius01,
+  metricThresholdLegendBySlug,
   sttVelocityRatioToRadius01,
   summarizationVelocityToRadius01,
   tiersForSttRadar,
+  type MetricTier,
 } from "./metricGrades";
-import { TuringMetricsStack, type MetricTrendPoint } from "./TuringMetricCard";
 import {
+  TuringMetricGrid,
+  TuringMetricsStack,
+  type MetricTrendPoint,
+  type TuringMetricGridItem,
+} from "./TuringMetricCard";
+import { formatMetricValue } from "./turingFormat";
+import {
+  CS_DETAIL_METRICS,
   STT_METRIC_DESCRIPTIONS,
   STT_METRIC_SLUGS,
   STT_RADAR_CHART_LABELS,
@@ -430,6 +440,38 @@ export function TuringDashboardView({
     [items]
   );
 
+  // CS 도메인 상세 지표(엑셀 v0.2) — 전체 표시, CS 특화(하늘색)는 카드에서 강조.
+  const csDetailItems = useMemo<TuringMetricGridItem[]>(
+    () =>
+      CS_DETAIL_METRICS.map((m) => {
+        const raw = m.read(demo);
+        const unsupported = raw === null;
+        const tier: MetricTier | "neutral" =
+          raw == null ? "neutral" : gradeMetricBySlug(m.slug, raw);
+        const trendSeries = m.trend
+          ? (m.trend.group === "stt"
+              ? sttMetricTrendSeries
+              : summaryMetricTrendSeries)[m.trend.index] ?? []
+          : [];
+        return {
+          key: `${m.group}-${m.slug}`,
+          groupMeta: m.group,
+          metricSlug: m.slug,
+          title: m.label,
+          description: m.description,
+          tier,
+          displayValue: formatMetricValue(raw, m.rowFormat),
+          thumbPosition01: raw == null ? null : Math.min(1, Math.max(0, raw)),
+          rowFormat: m.rowFormat,
+          thresholdLegendRows: metricThresholdLegendBySlug(m.slug),
+          unsupported,
+          trendSeries,
+          csSpecial: m.csSpecial,
+        };
+      }),
+    [demo, sttMetricTrendSeries, summaryMetricTrendSeries]
+  );
+
   const sttTiers = tiersForSttRadar({
     sttVelocityRatio: demo.stt.velocityRatio,
     uer: demo.stt.uer,
@@ -578,32 +620,22 @@ export function TuringDashboardView({
             />
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-            <TuringMetricsStack
-              heading="STT"
-              metaPrefix="STT"
-              slugs={sttDetailSlugs}
-              listLabels={sttDetailListLabels}
-              descriptions={sttDetailDescriptions}
-              legendSource="stt"
-              values={sttDetailValues}
-              tiers={sttDetailTiers}
-              rowFormats={sttDetailRowFormats}
-              trendSeriesByMetric={sttDetailTrendSeries}
-            />
-            <TuringMetricsStack
-              heading="Summary (SOAP)"
-              metaPrefix="SUMMARY"
-              slugs={summaryDetailSlugs}
-              listLabels={summaryDetailListLabels}
-              descriptions={summaryDetailDescriptions}
-              legendSource="summary"
-              values={summaryDetailValues}
-              tiers={summaryDetailTiers}
-              rowFormats={summaryDetailRowFormats}
-              trendSeriesByMetric={summaryDetailTrendSeries}
-            />
-          </div>
+          <>
+            <div className="mb-4 flex items-center gap-2 rounded-lg border border-sky-200 bg-sky-50/70 px-3 py-2 text-xs text-brand-navy">
+              <span
+                className="h-3 w-3 shrink-0 rounded-sm bg-sky-200 ring-1 ring-sky-300"
+                aria-hidden
+              />
+              <span>
+                하늘색으로 표시된 항목은{" "}
+                <strong className="font-semibold text-sky-700">
+                  CS 도메인 특화 지표
+                </strong>
+                입니다.
+              </span>
+            </div>
+            <TuringMetricGrid items={csDetailItems} />
+          </>
         )}
       </section>
 

@@ -293,6 +293,7 @@ export function TuringMetricCard({
   trendSeries,
   expanded,
   onToggleExpand,
+  csSpecial = false,
 }: {
   groupMeta: string;
   metricSlug: string;
@@ -308,13 +309,19 @@ export function TuringMetricCard({
   trendSeries: MetricTrendPoint[];
   expanded: boolean;
   onToggleExpand: () => void;
+  /** 엑셀 하늘색 = CS 도메인 특화 지표 → 하늘색 강조 */
+  csSpecial?: boolean;
 }) {
   const hint = directionHint(rowFormat);
   const showGauge = !unsupported && thumbPosition01 !== null;
 
   return (
     <div
-      className="admin-card flex cursor-pointer flex-col gap-2.5 p-4 transition-colors hover:bg-brand-surface/20 sm:p-4"
+      className={`admin-card flex cursor-pointer flex-col gap-2.5 p-4 transition-colors sm:p-4 ${
+        csSpecial
+          ? "bg-sky-50/60 ring-1 ring-sky-300 hover:bg-sky-50"
+          : "hover:bg-brand-surface/20"
+      }`}
       role="button"
       tabIndex={0}
       onClick={onToggleExpand}
@@ -327,8 +334,15 @@ export function TuringMetricCard({
       aria-expanded={expanded}
     >
       <div className="flex items-start justify-between gap-2">
-        <p className="min-w-0 text-[10px] font-semibold uppercase leading-tight tracking-[0.14em] text-brand-slate/55">
-          {groupMeta} · {metricSlug}
+        <p className="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1 text-[10px] font-semibold uppercase leading-tight tracking-[0.14em] text-brand-slate/55">
+          <span>
+            {groupMeta} · {metricSlug}
+          </span>
+          {csSpecial ? (
+            <span className="rounded-full bg-sky-100 px-1.5 py-0.5 text-[9px] font-bold tracking-normal text-sky-700">
+              CS 특화
+            </span>
+          ) : null}
         </p>
         <div className="shrink-0">
           {unsupported ? (
@@ -500,5 +514,55 @@ export function TuringMetricsStack({
         })}
       </ul>
     </div>
+  );
+}
+
+export type TuringMetricGridItem = {
+  key: string;
+  groupMeta: string;
+  metricSlug: string;
+  title: string;
+  description: string;
+  tier: MetricTier | "neutral";
+  displayValue: string;
+  thumbPosition01: number | null;
+  rowFormat: RowFormat;
+  thresholdLegendRows: Array<{ tier: MetricTier; condition: string }>;
+  unsupported: boolean;
+  trendSeries: MetricTrendPoint[];
+  csSpecial: boolean;
+};
+
+/**
+ * 그룹 제목 없이 카드들을 한 그리드에 배치 (STT/Summary 구분 제목 제거).
+ * CS 특화(하늘색) 항목은 카드 자체가 하늘색으로 강조된다.
+ */
+export function TuringMetricGrid({ items }: { items: TuringMetricGridItem[] }) {
+  const [expandedKey, setExpandedKey] = useState<string | null>(null);
+  return (
+    <ul className="m-0 grid list-none grid-cols-1 gap-3 p-0 sm:grid-cols-2 xl:grid-cols-3">
+      {items.map((it) => (
+        <li key={it.key}>
+          <TuringMetricCard
+            groupMeta={it.groupMeta}
+            metricSlug={it.metricSlug}
+            title={it.title}
+            description={it.description}
+            tier={it.tier}
+            displayValue={it.displayValue}
+            thumbPosition01={it.thumbPosition01}
+            rowFormat={it.rowFormat}
+            thresholdLegendRows={it.thresholdLegendRows}
+            unsupported={it.unsupported}
+            trendSeries={it.trendSeries}
+            csSpecial={it.csSpecial}
+            expanded={expandedKey === it.key}
+            onToggleExpand={() =>
+              setExpandedKey((prev) => (prev === it.key ? null : it.key))
+            }
+          />
+        </li>
+      ))}
+    </ul>
   );
 }

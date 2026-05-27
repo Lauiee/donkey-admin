@@ -311,6 +311,93 @@ export function tierToDotColor(t: MetricTier | "neutral"): string {
   return TIER_COLOR[t];
 }
 
+// ─────────────────────────────────────────────────────────────────────────
+// CS 도메인 평가지표 (동키CNT v0.2) — slug 기반 등급/임계 범례.
+// 의료 도메인 지표명(MMR/MDR/MIR)을 CS 용어(CKM/CKD/CIR)로 대체하고,
+// CS 특화 지표(KCR/IDR/AC/RRS/CSR Turn Ratio)를 추가한다.
+// ─────────────────────────────────────────────────────────────────────────
+
+/** CSR 발화 비율 — 적정 범위(25~50%)를 벗어날수록 미흡 */
+export function gradeCsrTurnRatio(v: number): MetricTier {
+  if (v >= 0.25 && v <= 0.5) return "excellent";
+  if ((v >= 0.15 && v < 0.25) || (v > 0.5 && v <= 0.65)) return "medium";
+  return "poor";
+}
+
+/** CS 지표 slug → 등급. (값이 null 인 경우는 호출 측에서 neutral 처리) */
+export function gradeMetricBySlug(slug: string, v: number): MetricTier {
+  switch (slug) {
+    case "UER":
+      return gradeUer(v);
+    case "CKM": // CS Keyword Miss (구 MMR)
+      return gradeMmr(v);
+    case "CKD": // CS Keyword Distortion (구 MDR/summary_mdr)
+      return gradeSttMdr(v);
+    case "DIARIZATION":
+      return gradeDiarizationAccuracy(v);
+    case "REDUNDANCY":
+      return gradeRedundancyRatio(v);
+    case "HR":
+      return gradeHallucinationRatio(v);
+    case "SSR":
+      return gradeSsr(v);
+    case "ICR":
+      return gradeIcr(v) as MetricTier;
+    case "CIR": // CS Information Recall (구 MIR)
+      return gradeMir(v);
+    case "SSA":
+      return gradeSsa(v);
+    case "KCR":
+    case "IDR":
+    case "AC":
+    case "RRS":
+      return tierHigherIsBetter(v, 0.7, 0.4);
+    case "CSR_TURN":
+      return gradeCsrTurnRatio(v);
+    default:
+      return tierHigherIsBetter(v, 0.5, 0.25);
+  }
+}
+
+/** CS 지표 slug → 임계 구간 범례 (카드 하단). */
+export function metricThresholdLegendBySlug(slug: string): Array<{
+  tier: MetricTier;
+  condition: string;
+}> {
+  switch (slug) {
+    case "UER":
+    case "REDUNDANCY":
+      return thresholdLegendLower(0.05, 0.15);
+    case "CKM":
+    case "CKD":
+    case "HR":
+      return thresholdLegendLower(0.1, 0.3);
+    case "DIARIZATION":
+      return thresholdLegendHigher(0.8, 0.5);
+    case "SSR":
+    case "CIR":
+    case "SSA":
+    case "KCR":
+    case "IDR":
+    case "AC":
+    case "RRS":
+      return thresholdLegendHigher(0.7, 0.4);
+    case "ICR":
+      return [
+        { tier: "excellent", condition: `x < ${rawRatioPctLabel(0.5)}` },
+        { tier: "medium", condition: `x ≥ ${rawRatioPctLabel(0.5)}` },
+      ];
+    case "CSR_TURN":
+      return [
+        { tier: "excellent", condition: "25% ≤ x ≤ 50%" },
+        { tier: "medium", condition: "15–25% · 50–65%" },
+        { tier: "poor", condition: "그 외" },
+      ];
+    default:
+      return thresholdLegendLower(0, 1);
+  }
+}
+
 /** 차트 반지름용 — STT velocity 비율: 낮을수록 좋음 → 우수일수록 바깥으로 */
 export function sttVelocityRatioToRadius01(ratio: number): number {
   const { vmax } = VELOCITY_GAUGE.stt;
