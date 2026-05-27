@@ -48,6 +48,12 @@ import { TuringHoverDescription } from "./TuringHoverDescription";
 import { VelocityGauge } from "./VelocityGauge";
 import { TURING_GAUGE_THUMB_LINE } from "./turingGaugeTheme";
 
+/**
+ * 목데이터 모드. true 이면 실제 Turing API 대신 고정 목업 데이터를 사용한다.
+ * (실 API 연동 복구 시 false 로 변경 — .env 의 VITE_TURING_API_KEY 사용)
+ */
+const USE_MOCK_DATA = true;
+
 const SAMP = {
   processingVelocity: [
     0.71, 0.73, 0.7, 0.74, 0.72, 0.71, 0.75, 0.72, 0.73, 0.71,
@@ -84,27 +90,32 @@ const SAMP = {
 
 const PER_CASE_COMPOSITE_FALLBACK = [63, 61, 66, 64, 62, 63, 67, 65, 64, 66];
 
+/**
+ * 목업 데모 데이터. 등급 분포 의도: 대부분 우수 / 약 1/3 보통 / 미흡은 HR 단 하나.
+ * (상세 16개 카드 기준 우수 10 · 보통 5 · 미흡 1, Velocity 포함 시 우수 12 · 보통 6 · 미흡 1)
+ * 값은 metricGrades 임계값에 맞춰 고정.
+ */
 function buildFallbackDemo(): TuringDemoState {
   return {
-    processingVelocity01: averageSamples(SAMP.processingVelocity),
-    summarizationVelocity01: averageSamples(SAMP.summarizationVelocity),
+    processingVelocity01: 0.22, // 우수 (<0.3)
+    summarizationVelocity01: 0.18, // 보통 (0.1~0.3)
     stt: {
-      velocityRatio: averageSamples(SAMP.sttVelocityRatio),
-      uer: averageSamples(SAMP.uer),
-      piiProtection: averageSamples(SAMP.piiProtection),
-      mmr: averageSamples(SAMP.mmr),
-      mdr: averageSamples(SAMP.mdr),
-      diarizationAccuracy: averageSamples(SAMP.diarizationAccuracy),
-      redundancyRatio: averageSamples(SAMP.redundancyRatio),
+      velocityRatio: 0.15, // 우수 (<0.2)
+      uer: 0.03, // 우수 (<0.05)
+      piiProtection: 0.95, // 상세 미표시(엑셀 제외) — healthScore 가중용
+      mmr: 0.06, // CKM 우수 (<0.1)
+      mdr: 0.18, // CKD 보통 (0.1~0.3)
+      diarizationAccuracy: 0.88, // 우수 (>0.8)
+      redundancyRatio: 0.03, // 우수 (<0.05)
     },
     summary: {
-      summarizationVelocity01: averageSamples(SAMP.summarizationVelocity),
-      hallucinationRatio: averageSamples(SAMP.summaryHallucination),
-      ssr: averageSamples(SAMP.ssr),
-      icr: averageSamples(SAMP.icr),
-      summaryMdr: averageSamples(SAMP.summaryMdr),
-      mir: averageSamples(SAMP.mir),
-      ssa: averageSamples(SAMP.ssa),
+      summarizationVelocity01: 0.18, // 보통
+      hallucinationRatio: 0.35, // HR 미흡 (≥0.3) ← 유일한 미흡
+      ssr: 0.82, // 우수 (>0.7)
+      icr: 0.55, // 보통 (≥0.5)
+      summaryMdr: 0.16, // CKD(요약) 보통 (0.1~0.3)
+      mir: 0.78, // CIR 우수 (>0.7)
+      ssa: 0.8, // 우수 (>0.7)
     },
   };
 }
@@ -339,7 +350,7 @@ export function TuringDashboardView({
   const [items, setItems] = useState<EvaluationListItemApi[]>([]);
 
   useEffect(() => {
-    if (!hasTuringApiKey()) {
+    if (USE_MOCK_DATA || !hasTuringApiKey()) {
       setItems([]);
       setDemo(buildFallbackDemo());
       setPerCaseComposite(PER_CASE_COMPOSITE_FALLBACK);
@@ -466,7 +477,7 @@ export function TuringDashboardView({
           thresholdLegendRows: metricThresholdLegendBySlug(m.slug),
           unsupported,
           trendSeries,
-          csSpecial: m.csSpecial,
+          csSpecial: false, // 평범하게 균일 표시 — CS 특화 하늘색 강조/태그 미적용
         };
       }),
     [demo, sttMetricTrendSeries, summaryMetricTrendSeries]
@@ -620,22 +631,7 @@ export function TuringDashboardView({
             />
           </div>
         ) : (
-          <>
-            <div className="mb-4 flex items-center gap-2 rounded-lg border border-sky-200 bg-sky-50/70 px-3 py-2 text-xs text-brand-navy">
-              <span
-                className="h-3 w-3 shrink-0 rounded-sm bg-sky-200 ring-1 ring-sky-300"
-                aria-hidden
-              />
-              <span>
-                하늘색으로 표시된 항목은{" "}
-                <strong className="font-semibold text-sky-700">
-                  CS 도메인 특화 지표
-                </strong>
-                입니다.
-              </span>
-            </div>
-            <TuringMetricGrid items={csDetailItems} />
-          </>
+          <TuringMetricGrid items={csDetailItems} />
         )}
       </section>
 

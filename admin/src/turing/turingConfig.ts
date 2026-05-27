@@ -124,13 +124,13 @@ export type CsDetailMetricDef = {
   trend?: { group: "stt" | "summary"; index: number };
 };
 
-/** CS 특화 신규 지표 목업값 (API 미제공) */
+/** CS 특화 신규 지표 목업값 (API 미제공) — 등급 분포 의도: KCR/AC/RRS 우수, IDR/CSR Turn 보통 */
 export const TURING_CS_SPECIAL_MOCK = {
-  kcr: 0.81,
-  idr: 0.76,
-  ac: 0.79,
-  rrs: 0.74,
-  csrTurnRatio: 0.38,
+  kcr: 0.81, // 우수 (>0.7)
+  idr: 0.66, // 보통 (0.4~0.7)
+  ac: 0.79, // 우수 (>0.7)
+  rrs: 0.74, // 우수 (>0.7)
+  csrTurnRatio: 0.58, // 보통 (적정 25~50% 밖, 0.5~0.65)
 } as const;
 
 export const CS_DETAIL_METRICS: readonly CsDetailMetricDef[] = [
