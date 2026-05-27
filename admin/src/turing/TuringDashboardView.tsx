@@ -477,7 +477,6 @@ export function TuringDashboardView({
           thresholdLegendRows: metricThresholdLegendBySlug(m.slug),
           unsupported,
           trendSeries,
-          csSpecial: false, // 평범하게 균일 표시 — CS 특화 하늘색 강조/태그 미적용
         };
       }),
     [demo, sttMetricTrendSeries, summaryMetricTrendSeries]

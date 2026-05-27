@@ -104,8 +104,7 @@ export const SUMMARY_METRIC_DESCRIPTIONS: readonly string[] = [
 // ─────────────────────────────────────────────────────────────────────────
 // CS 도메인 상세 지표 (동키CNT_평가지표 v0.2 기준).
 // Velocity(Processing/STT/Summarization)는 상단 Velocity 섹션에서 별도 표시하므로 제외.
-// csSpecial=true 인 항목이 엑셀에서 하늘색으로 표시된 "CS 도메인 특화 지표".
-// read(demo): API 평균(demo)에서 값 추출. CS 특화 신규 지표(KCR/IDR/AC/RRS/CSR Turn)는 API 미제공 → mock.
+// read(demo): API 평균(demo)에서 값 추출. 신규 지표(KCR/IDR/AC/RRS/CSR Turn)는 API 미제공 → mock.
 // ─────────────────────────────────────────────────────────────────────────
 
 export type CsMetricGroup = "STT" | "SUMMARY" | "CS";
@@ -115,8 +114,6 @@ export type CsDetailMetricDef = {
   label: string;
   description: string;
   group: CsMetricGroup;
-  /** 엑셀 하늘색 = CS 도메인 특화 지표 */
-  csSpecial: boolean;
   rowFormat: "percent" | "invertedPercent";
   /** demo 에서 값 추출 (null=미지원). CS 특화 신규 지표는 mock 상수 반환. */
   read: (demo: TuringDemoState) => number | null;
@@ -140,7 +137,6 @@ export const CS_DETAIL_METRICS: readonly CsDetailMetricDef[] = [
     label: "UER (Unnatural Expression Ratio)",
     description: "문법적으로 부자연스럽거나 의미 해석이 불가능한 문장 비율",
     group: "STT",
-    csSpecial: false,
     rowFormat: "invertedPercent",
     read: (d) => d.stt.uer,
     trend: { group: "stt", index: 1 },
@@ -151,7 +147,6 @@ export const CS_DETAIL_METRICS: readonly CsDetailMetricDef[] = [
     description:
       "전사 과정에서 실제 발화된 CS 도메인 키워드(메뉴명, 배달·환불 용어 등)를 인식하지 못한 비율",
     group: "STT",
-    csSpecial: true,
     rowFormat: "invertedPercent",
     read: (d) => d.stt.mmr,
     trend: { group: "stt", index: 3 },
@@ -161,7 +156,6 @@ export const CS_DETAIL_METRICS: readonly CsDetailMetricDef[] = [
     label: "CKD (CS Keyword Distortion Ratio)",
     description: "전사 과정에서 CS 도메인 키워드가 잘못된 형태로 출력된 비율 (용어 왜곡)",
     group: "STT",
-    csSpecial: true,
     rowFormat: "invertedPercent",
     read: (d) => d.stt.mdr,
     trend: { group: "stt", index: 4 },
@@ -171,7 +165,6 @@ export const CS_DETAIL_METRICS: readonly CsDetailMetricDef[] = [
     label: "Diarization Accuracy",
     description: "화자 라벨 및 구간이 정확히 매칭된 세그먼트 비율",
     group: "STT",
-    csSpecial: false,
     rowFormat: "percent",
     read: (d) => d.stt.diarizationAccuracy,
     trend: { group: "stt", index: 5 },
@@ -181,7 +174,6 @@ export const CS_DETAIL_METRICS: readonly CsDetailMetricDef[] = [
     label: "Redundancy Ratio",
     description: "비정상적 반복 (모델 오류로 인한 반복) 비율",
     group: "STT",
-    csSpecial: false,
     rowFormat: "invertedPercent",
     read: (d) => d.stt.redundancyRatio,
     trend: { group: "stt", index: 6 },
@@ -192,7 +184,6 @@ export const CS_DETAIL_METRICS: readonly CsDetailMetricDef[] = [
     label: "HR (Hallucination Ratio)",
     description: "전사문 대비 의미적 근거를 찾을 수 없는 문장의 비율",
     group: "SUMMARY",
-    csSpecial: false,
     rowFormat: "invertedPercent",
     read: (d) => d.summary.hallucinationRatio,
     trend: { group: "summary", index: 1 },
@@ -202,7 +193,6 @@ export const CS_DETAIL_METRICS: readonly CsDetailMetricDef[] = [
     label: "SSR (Semantic Similarity Ratio)",
     description: "전사문 대비 핵심 의미를 충실히 유지한 문장의 비율",
     group: "SUMMARY",
-    csSpecial: false,
     rowFormat: "percent",
     read: (d) => d.summary.ssr,
     trend: { group: "summary", index: 2 },
@@ -212,7 +202,6 @@ export const CS_DETAIL_METRICS: readonly CsDetailMetricDef[] = [
     label: "ICR (Information Compression Ratio)",
     description: "전사문 대비 얼마나 정보량을 압축했는지를 나타내는 비율",
     group: "SUMMARY",
-    csSpecial: false,
     rowFormat: "invertedPercent",
     read: (d) => d.summary.icr,
     trend: { group: "summary", index: 3 },
@@ -223,7 +212,6 @@ export const CS_DETAIL_METRICS: readonly CsDetailMetricDef[] = [
     description:
       "CIAR 요약 내 CS 핵심 정보(주문내용·환불금액·처리방법 등)가 잘못된 형태로 출력된 비율 (용어 왜곡)",
     group: "SUMMARY",
-    csSpecial: true,
     rowFormat: "invertedPercent",
     read: (d) => d.summary.summaryMdr,
     trend: { group: "summary", index: 4 },
@@ -233,7 +221,6 @@ export const CS_DETAIL_METRICS: readonly CsDetailMetricDef[] = [
     label: "CIR (CS Information Recall)",
     description: "전사문 대비 CS 핵심 정보의 CIAR 포함 비율 (누락 여부 측정)",
     group: "SUMMARY",
-    csSpecial: true,
     rowFormat: "percent",
     read: (d) => d.summary.mir,
     trend: { group: "summary", index: 5 },
@@ -244,7 +231,6 @@ export const CS_DETAIL_METRICS: readonly CsDetailMetricDef[] = [
     description:
       "CIAR 5개 슬롯(context/intent/action/result/issue)이 올바른 섹션/슬롯에 배치된 비율",
     group: "SUMMARY",
-    csSpecial: false,
     rowFormat: "percent",
     read: (d) => d.summary.ssa,
     trend: { group: "summary", index: 6 },
@@ -256,7 +242,6 @@ export const CS_DETAIL_METRICS: readonly CsDetailMetricDef[] = [
     description:
       "CIAR keywords가 전사문의 실제 발화 내용을 얼마나 커버하는지 나타내는 비율",
     group: "CS",
-    csSpecial: true,
     rowFormat: "percent",
     read: () => TURING_CS_SPECIAL_MOCK.kcr,
   },
@@ -266,7 +251,6 @@ export const CS_DETAIL_METRICS: readonly CsDetailMetricDef[] = [
     description:
       "통화에서 발생한 실제 고객 불만·CS 이슈가 issue 필드에 빠짐없이 포착된 비율",
     group: "CS",
-    csSpecial: true,
     rowFormat: "percent",
     read: () => TURING_CS_SPECIAL_MOCK.idr,
   },
@@ -276,7 +260,6 @@ export const CS_DETAIL_METRICS: readonly CsDetailMetricDef[] = [
     description:
       "csr(상담원)이 실제 취한 조치·안내가 action 필드에 누락 없이 반영된 비율",
     group: "CS",
-    csSpecial: true,
     rowFormat: "percent",
     read: () => TURING_CS_SPECIAL_MOCK.ac,
   },
@@ -286,7 +269,6 @@ export const CS_DETAIL_METRICS: readonly CsDetailMetricDef[] = [
     description:
       "재인입 고객 응대 시 이전 통화 내용을 빠르게 파악할 수 있는 요약 충실도 복합 지표 (SSR·CSIR·CC 가중 결합)",
     group: "CS",
-    csSpecial: true,
     rowFormat: "percent",
     read: () => TURING_CS_SPECIAL_MOCK.rrs,
   },
@@ -296,7 +278,6 @@ export const CS_DETAIL_METRICS: readonly CsDetailMetricDef[] = [
     description:
       "전체 발화 세그먼트 중 csr(상담원) 발화 비율 (적정 범위 25~50%)",
     group: "CS",
-    csSpecial: true,
     rowFormat: "percent",
     read: () => TURING_CS_SPECIAL_MOCK.csrTurnRatio,
   },
