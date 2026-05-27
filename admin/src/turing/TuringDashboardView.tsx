@@ -451,7 +451,7 @@ export function TuringDashboardView({
     [items]
   );
 
-  // CS 도메인 상세 지표(엑셀 v0.2) — 전체 표시, CS 특화(하늘색)는 카드에서 강조.
+  // CS 도메인 상세 지표(엑셀 v0.2) — 모든 지표를 동일한 형식으로 표시(별도 강조/범례 없음).
   const csDetailItems = useMemo<TuringMetricGridItem[]>(
     () =>
       CS_DETAIL_METRICS.map((m) => {
