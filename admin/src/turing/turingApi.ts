@@ -47,6 +47,22 @@ export interface EvaluationsListResponse {
   items: EvaluationListItemApi[];
 }
 
+/** 지표별 상세 진단(JSON 그대로 저장) — 키별로 nullable object */
+export type EvaluationDetailsApi = Record<string, unknown> | null;
+
+/** GET /evaluations/{id} — 단건 전체 필드 (목록 항목 + 본문/참조/상세) */
+export interface EvaluationFullApi extends EvaluationListItemApi {
+  audio_url: string | null;
+  segment_count: number | null;
+  full_text: string | null;
+  reference_text: string | null;
+  has_reference: boolean;
+  error_message: string | null;
+  deleted_at: string | null;
+  updated_at: string;
+  details: EvaluationDetailsApi;
+}
+
 function getTuringBaseUrl(): string {
   const env = (import.meta.env.VITE_TURING_API_BASE as string | undefined)?.trim();
   if (env) return env.replace(/\/$/, "");
@@ -131,6 +147,37 @@ export async function fetchTuringEvaluations(params: {
   const res = await fetch(u.toString(), { headers: turingHeaders() });
   if (res.status === 401) {
     throw new Error("Turing API 인증에 실패했습니다. X-API-Key를 확인해 주세요.");
+  }
+  if (!res.ok) {
+    const body = (await res.json().catch(() => ({}))) as {
+      message?: string;
+      error?: string;
+    };
+    throw new Error(
+      body?.message || body?.error || `Turing API 오류 (${res.status})`
+    );
+  }
+  return res.json();
+}
+
+/** GET /evaluations/{id} — 단건 전체 필드 조회 */
+export async function fetchTuringEvaluationById(
+  id: number
+): Promise<EvaluationFullApi> {
+  if (!Number.isInteger(id) || id < 1) {
+    throw new Error("유효하지 않은 평가 ID입니다.");
+  }
+  if (!hasTuringApiKey()) {
+    throw new Error("VITE_TURING_API_KEY가 설정되지 않았습니다.");
+  }
+
+  const u = buildTuringUrl(`/evaluations/${id}`);
+  const res = await fetch(u.toString(), { headers: turingHeaders() });
+  if (res.status === 401) {
+    throw new Error("Turing API 인증에 실패했습니다. X-API-Key를 확인해 주세요.");
+  }
+  if (res.status === 404) {
+    throw new Error("해당 평가 결과를 찾을 수 없습니다.");
   }
   if (!res.ok) {
     const body = (await res.json().catch(() => ({}))) as {

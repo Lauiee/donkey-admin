@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { PageHeader } from "../components/PageHeader";
 import { HeptagonRadar } from "./HeptagonRadar";
 import {
@@ -324,9 +325,12 @@ export function TuringDashboardView({
   >(() => buildFallbackMetricTrendSeries().summary);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // 실제 API 데이터일 때만 채워지는 최근 평가 목록(상세 진입용). 샘플 폴백 시 비움.
+  const [items, setItems] = useState<EvaluationListItemApi[]>([]);
 
   useEffect(() => {
     if (!hasTuringApiKey()) {
+      setItems([]);
       setDemo(buildFallbackDemo());
       setPerCaseComposite(PER_CASE_COMPOSITE_FALLBACK);
       const fallbackTimes = buildFallbackTrendTimeLabels(
@@ -351,6 +355,7 @@ export function TuringDashboardView({
         });
         if (cancelled) return;
         if (res.items.length === 0) {
+          setItems([]);
           setError("조회된 채점 결과가 없습니다.");
           setDemo(buildFallbackDemo());
           setPerCaseComposite(PER_CASE_COMPOSITE_FALLBACK);
@@ -378,8 +383,10 @@ export function TuringDashboardView({
         const trendSeries = buildMetricTrendSeriesFromItems(res.items);
         setSttMetricTrendSeries(trendSeries.stt);
         setSummaryMetricTrendSeries(trendSeries.summary);
+        setItems(res.items);
       } catch (e) {
         if (!cancelled) {
+          setItems([]);
           setError(e instanceof Error ? e.message : "불러오기 실패");
           setDemo(buildFallbackDemo());
           setPerCaseComposite(PER_CASE_COMPOSITE_FALLBACK);
@@ -409,6 +416,18 @@ export function TuringDashboardView({
         value,
       })),
     [perCaseComposite, trendTimeLabels, trendTooltipLabels]
+  );
+
+  // 최신순 정렬한 최근 평가(상세 진입용). 실제 API 데이터가 있을 때만 노출.
+  const recentItems = useMemo(
+    () =>
+      [...items]
+        .sort(
+          (a, b) =>
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        )
+        .slice(0, 10),
+    [items]
   );
 
   const sttTiers = tiersForSttRadar({
@@ -595,6 +614,59 @@ export function TuringDashboardView({
           series={trendByCase}
         />
       </section>
+
+      {recentItems.length > 0 && (
+        <section className="mt-10">
+          <TuringSectionTitle title="최근 평가" />
+          <div className="admin-card overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-brand-line text-left text-xs uppercase tracking-wide text-brand-slate">
+                  <th className="px-4 py-2.5 font-medium">Job ID</th>
+                  <th className="px-4 py-2.5 font-medium">카테고리</th>
+                  <th className="px-4 py-2.5 font-medium">오디오</th>
+                  <th className="px-4 py-2.5 font-medium">생성 시각</th>
+                  <th className="px-4 py-2.5 font-medium" aria-label="상세" />
+                </tr>
+              </thead>
+              <tbody>
+                {recentItems.map((it) => (
+                  <tr
+                    key={it.id}
+                    className="border-b border-brand-line/60 last:border-0 hover:bg-brand-surface/60"
+                  >
+                    <td className="px-4 py-2.5">
+                      <Link
+                        to={`/turing/${it.id}`}
+                        className="font-mono text-xs text-brand-navy hover:underline"
+                      >
+                        {it.job_id}
+                      </Link>
+                    </td>
+                    <td className="px-4 py-2.5 text-brand-ink">
+                      {it.specialty ?? "—"}
+                    </td>
+                    <td className="px-4 py-2.5 text-brand-ink">
+                      {it.audio_filename ?? "—"}
+                    </td>
+                    <td className="px-4 py-2.5 text-brand-slate">
+                      {formatTrendTimeLabel(it.created_at).full}
+                    </td>
+                    <td className="px-4 py-2.5 text-right">
+                      <Link
+                        to={`/turing/${it.id}`}
+                        className="text-xs font-medium text-brand-navy hover:underline"
+                      >
+                        상세 →
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
     </div>
   );
 }

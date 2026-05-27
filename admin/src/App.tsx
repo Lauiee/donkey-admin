@@ -9,6 +9,7 @@ import { HistoryDetail } from "./pages/HistoryDetail";
 import { Inquiry } from "./pages/Inquiry";
 import { InquiryDetail } from "./pages/InquiryDetail";
 import { Login } from "./pages/Login";
+import { TuringDetail } from "./pages/TuringDetail";
 import { TuringLab } from "./pages/TuringLab";
 import { Usage } from "./pages/Usage";
 
@@ -74,6 +75,7 @@ function App() {
           <Route path="inquiry" element={<Inquiry />} />
           <Route path="inquiry/:id" element={<InquiryDetail />} />
           <Route path="turing" element={<TuringLab />} />
+          <Route path="turing/:id" element={<TuringDetail />} />
         </Route>
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
