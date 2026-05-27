@@ -20,9 +20,10 @@ export default defineConfig(({ mode }) => {
           changeOrigin: true,
           rewrite: (path) => path.replace(/^\/api/, ""),
         },
-      /** STT 채점 API (X-API-Key) — CORS 우회용, 클라이언트는 /turing-api 로 요청 */
+      /** STT 채점 API (X-API-Key) — CORS 우회용, 클라이언트는 /turing-api 로 요청.
+       *  cnt 버전(cntt.turing.intcorp.ai). hippo 버전은 turing.donkey.ai.kr */
       "/turing-api": {
-        target: "https://turing.donkey.ai.kr",
+        target: "https://cntt.turing.intcorp.ai",
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/turing-api/, ""),
       },
