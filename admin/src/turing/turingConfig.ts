@@ -10,19 +10,19 @@ export const STT_RADAR_CHART_LABELS = [
   "STT Vel.",
   "UER",
   "PII",
-  "MMR",
-  "MDR",
+  "CKM",
+  "CKD",
   "Diar.",
   "Redund.",
 ] as const;
 
-/** 하단 표·툴팁용 풀 이름 */
+/** 하단 표·툴팁용 풀 이름 (상담(콜센터) 도메인) */
 export const STT_RADAR_LIST_LABELS = [
   "STT Velocity",
   "UER (Unnatural Expression Ratio)",
   "PII Protection",
-  "MMR (Medical Miss Ratio)",
-  "MDR (Medical Distortion Ratio)",
+  "CKM (CS Keyword Miss Ratio)",
+  "CKD (CS Keyword Distortion Ratio)",
   "Diarization Accuracy",
   "Redundancy Ratio",
 ] as const;
@@ -32,8 +32,8 @@ export const SUMMARY_RADAR_CHART_LABELS = [
   "HR",
   "SSR",
   "ICR",
-  "MDR",
-  "MIR",
+  "CKD",
+  "CIR",
   "SSA",
 ] as const;
 
@@ -42,8 +42,8 @@ export const SUMMARY_RADAR_LIST_LABELS = [
   "HR (Hallucination Ratio)",
   "SSR (Semantic Similarity Ratio)",
   "ICR (Information Compression Ratio)",
-  "MDR (Medical Distortion Ratio)",
-  "MIR (Medical Information Recall)",
+  "CKD (CS Keyword Distortion Ratio)",
+  "CIR (CS Information Recall)",
   "SSA (Structured Summary Accuracy)",
 ] as const;
 
@@ -61,32 +61,32 @@ export const VELOCITY_METRIC_DESCRIPTIONS = {
 export const STT_METRIC_DESCRIPTIONS: readonly string[] = [
   "STT 처리 속도",
   "문법적으로 부자연스럽거나 의미 해석이 불가능한 문장 비율",
-  "개인식별정보(이름, 주민번호, 이메일, 주소)를 올바르게 탐지하여 마스킹한 비율",
-  "전사 과정에서 실제 존재하는 의료 키워드를 아예 인식하지 못한 비율 (용어 미인식)",
-  "전사 과정에서 실제 의료 키워드가 잘못된 형태로 출력된 비율 (용어 왜곡)",
+  "개인식별정보(전화/주소/카드/이름 등)를 올바르게 탐지하여 마스킹한 비율",
+  "전사 과정에서 실제 발화된 CS 도메인 키워드(메뉴명·배달·환불 용어 등)를 인식하지 못한 비율",
+  "전사 과정에서 CS 도메인 키워드가 잘못된 형태로 출력된 비율 (용어 왜곡)",
   "화자 라벨 및 구간이 정확히 매칭된 세그먼트 비율",
   "비정상적 반복 (모델 오류로 인한 반복) 비율",
 ];
 
-/** 카드 상단 메타 — STT_RADAR_LIST_LABELS 와 동일 순서 */
+/** 카드 상단 메타 — STT_RADAR_LIST_LABELS 와 동일 순서 (metricGrades.METRIC_SPECS slug 와 정합) */
 export const STT_METRIC_SLUGS: readonly string[] = [
   "STT_VELOCITY",
   "UER",
   "PII_PROTECTION",
-  "MMR",
-  "MDR",
+  "CKM",
+  "CKD",
   "DIARIZATION",
   "REDUNDANCY",
 ];
 
-/** SUMMARY_RADAR_LIST_LABELS 와 동일 순서 */
+/** SUMMARY_RADAR_LIST_LABELS 와 동일 순서 (metricGrades.METRIC_SPECS slug 와 정합) */
 export const SUMMARY_METRIC_SLUGS: readonly string[] = [
   "SUMMARY_VELOCITY",
-  "HALLUCINATION",
+  "HR",
   "SSR",
   "ICR",
-  "MDR",
-  "MIR",
+  "CKD",
+  "CIR",
   "SSA",
 ];
 
@@ -96,9 +96,9 @@ export const SUMMARY_METRIC_DESCRIPTIONS: readonly string[] = [
   "전사문 대비 의미적 근거를 찾을 수 없는 문장의 비율",
   "전사문 대비 핵심 의미를 충실히 유지한 문장의 비율",
   "전사문 대비 얼마나 정보량을 압축했는지를 나타내는 비율",
-  "실제 의료 키워드가 잘못된 형태로 출력된 비율 (용어 왜곡)",
-  "전사문 대비 의료 정보 포함 비율 (누락된 의료정보가 없는지 파악하기 위한 지표)",
-  "올바른 섹션/슬롯에 배치된 비율",
+  "CIAR 요약 내 CS 핵심정보(주문내용·환불금액·처리방법 등)가 잘못된 형태로 출력된 비율 (용어 왜곡)",
+  "전사문 대비 CS 핵심정보의 CIAR 포함 비율 (누락 여부 측정)",
+  "CIAR 5섹션(context/intent/action/result/issue)이 올바른 섹션/슬롯에 배치된 비율",
 ];
 
 // ─────────────────────────────────────────────────────────────────────────

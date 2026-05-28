@@ -9,7 +9,7 @@ import {
   metricThresholdLegendBySlug,
   sttVelocityRatioToRadius01,
   summarizationVelocityToRadius01,
-  tiersForSttRadar,
+  tiersForSttRadarNullable,
   type MetricTier,
 } from "./metricGrades";
 import {
@@ -495,7 +495,7 @@ export function TuringDashboardView({
     [demo, sttMetricTrendSeries, summaryMetricTrendSeries]
   );
 
-  const sttTiers = tiersForSttRadar({
+  const sttTiers = tiersForSttRadarNullable({
     sttVelocityRatio: demo.stt.velocityRatio,
     uer: demo.stt.uer,
     piiProtection: demo.stt.piiProtection,
@@ -515,7 +515,7 @@ export function TuringDashboardView({
     ssa: demo.summary.ssa,
   });
 
-  const sttRadarDisplayValues = [
+  const sttRadarDisplayValues: (number | null)[] = [
     demo.stt.velocityRatio,
     demo.stt.uer,
     demo.stt.piiProtection,
@@ -524,14 +524,19 @@ export function TuringDashboardView({
     demo.stt.diarizationAccuracy,
     demo.stt.redundancyRatio,
   ];
-  const sttRadarChartRadii = [
+  // null=표본 없음 → 차트 축에서 가운데(0)로 표기하지 않고 명시적으로 null 전달
+  const sttRadarChartRadii: (number | null)[] = [
     sttVelocityRatioToRadius01(demo.stt.velocityRatio),
-    lowerRatioToRadius01(demo.stt.uer),
-    higherRatioToRadius01(demo.stt.piiProtection),
-    lowerRatioToRadius01(demo.stt.mmr),
-    lowerRatioToRadius01(demo.stt.mdr),
-    higherRatioToRadius01(demo.stt.diarizationAccuracy),
-    lowerRatioToRadius01(demo.stt.redundancyRatio),
+    demo.stt.uer == null ? null : lowerRatioToRadius01(demo.stt.uer),
+    demo.stt.piiProtection == null ? null : higherRatioToRadius01(demo.stt.piiProtection),
+    demo.stt.mmr == null ? null : lowerRatioToRadius01(demo.stt.mmr),
+    demo.stt.mdr == null ? null : lowerRatioToRadius01(demo.stt.mdr),
+    demo.stt.diarizationAccuracy == null
+      ? null
+      : higherRatioToRadius01(demo.stt.diarizationAccuracy),
+    demo.stt.redundancyRatio == null
+      ? null
+      : lowerRatioToRadius01(demo.stt.redundancyRatio),
   ];
 
   const summaryRadarDisplayValues: (number | null)[] = [
@@ -632,7 +637,7 @@ export function TuringDashboardView({
               rowFormats={sttDetailRowFormats}
             />
             <HeptagonRadar
-              title="Summary (SOAP)"
+              title="Summary (CIAR)"
               values={summaryDetailValues}
               chartRadii={summaryDetailRadii}
               chartLabels={summaryDetailChartLabels}

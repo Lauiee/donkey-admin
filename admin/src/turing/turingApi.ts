@@ -4,13 +4,15 @@
  */
 
 export interface SttMetricsApi {
+  /** 로그 기반 결정값 — 항상 산출 */
   stt_velocity: number;
-  uer: number;
-  pii_protection: number;
-  mmr: number;
-  mdr: number;
-  diarization_accuracy: number;
-  redundancy_ratio: number;
+  /** 아래 ratio 지표는 LLM-as-Judge 산출 실패/스킵 시 null */
+  uer: number | null;
+  pii_protection: number | null;
+  mmr: number | null;
+  mdr: number | null;
+  diarization_accuracy: number | null;
+  redundancy_ratio: number | null;
 }
 
 export interface SummaryMetricsApi {

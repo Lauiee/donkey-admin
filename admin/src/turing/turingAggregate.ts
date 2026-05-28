@@ -22,13 +22,15 @@ export type TuringDemoState = {
   processingVelocity01: number;
   summarizationVelocity01: number | null;
   stt: {
+    /** 로그 기반 결정값 — 항상 산출 */
     velocityRatio: number;
-    uer: number;
-    piiProtection: number;
-    mmr: number;
-    mdr: number;
-    diarizationAccuracy: number;
-    redundancyRatio: number;
+    /** LLM-as-Judge 산출 실패/스킵 시 표본 0건 → null */
+    uer: number | null;
+    piiProtection: number | null;
+    mmr: number | null;
+    mdr: number | null;
+    diarizationAccuracy: number | null;
+    redundancyRatio: number | null;
   };
   summary: {
     summarizationVelocity01: number | null;
@@ -64,75 +66,41 @@ function tierToHealthScore(tier: MetricTier): number {
  * - critical(3): pii_protection, hallucination_ratio, mdr, summary_mdr
  * - default(1): 나머지 지표
  */
+/**
+ * null=미산출은 "미흡(poor)"이 아니라 가중평균에서 제외해야 점수가 왜곡되지 않음.
+ * 산출 가능한 지표끼리만 가중평균을 낸다.
+ */
 function healthScoreFromItem(item: EvaluationListItemApi): number {
   const { metrics } = item;
 
-  const weighted: Array<{ value: number; weight: number }> = [
+  const tier = <T>(v: T | null, fn: (x: T) => MetricTier): MetricTier | null =>
+    v == null ? null : fn(v);
+
+  const weighted: Array<{ tier: MetricTier | null; weight: number }> = [
     // default(1)
-    { value: tierToHealthScore(gradeProcessingVelocity(metrics.processing_velocity)), weight: 1 },
-    { value: tierToHealthScore(gradeSttVelocityRatio(metrics.stt.stt_velocity)), weight: 1 },
-    { value: tierToHealthScore(gradeUer(metrics.stt.uer)), weight: 1 },
-    { value: tierToHealthScore(gradeMmr(metrics.stt.mmr)), weight: 1 },
-    { value: tierToHealthScore(gradeDiarizationAccuracy(metrics.stt.diarization_accuracy)), weight: 1 },
-    { value: tierToHealthScore(gradeRedundancyRatio(metrics.stt.redundancy_ratio)), weight: 1 },
-    {
-      value: tierToHealthScore(
-        metrics.summary.summarization_velocity == null
-          ? "poor"
-          : gradeSummarizationVelocity(metrics.summary.summarization_velocity)
-      ),
-      weight: 1,
-    },
-    {
-      value: tierToHealthScore(
-        metrics.summary.ssr == null ? "poor" : gradeSsr(metrics.summary.ssr)
-      ),
-      weight: 1,
-    },
-    {
-      value: tierToHealthScore(
-        metrics.summary.icr == null
-          ? "poor"
-          : (gradeIcr(metrics.summary.icr) as MetricTier)
-      ),
-      weight: 1,
-    },
-    {
-      value: tierToHealthScore(
-        metrics.summary.mir == null ? "poor" : gradeMir(metrics.summary.mir)
-      ),
-      weight: 1,
-    },
-    {
-      value: tierToHealthScore(
-        metrics.summary.ssa == null ? "poor" : gradeSsa(metrics.summary.ssa)
-      ),
-      weight: 1,
-    },
+    { tier: gradeProcessingVelocity(metrics.processing_velocity), weight: 1 },
+    { tier: gradeSttVelocityRatio(metrics.stt.stt_velocity), weight: 1 },
+    { tier: tier(metrics.stt.uer, gradeUer), weight: 1 },
+    { tier: tier(metrics.stt.mmr, gradeMmr), weight: 1 },
+    { tier: tier(metrics.stt.diarization_accuracy, gradeDiarizationAccuracy), weight: 1 },
+    { tier: tier(metrics.stt.redundancy_ratio, gradeRedundancyRatio), weight: 1 },
+    { tier: tier(metrics.summary.summarization_velocity, gradeSummarizationVelocity), weight: 1 },
+    { tier: tier(metrics.summary.ssr, gradeSsr), weight: 1 },
+    { tier: tier(metrics.summary.icr, (x) => gradeIcr(x) as MetricTier), weight: 1 },
+    { tier: tier(metrics.summary.mir, gradeMir), weight: 1 },
+    { tier: tier(metrics.summary.ssa, gradeSsa), weight: 1 },
 
     // critical(3)
-    { value: tierToHealthScore(gradePiiProtection(metrics.stt.pii_protection)), weight: 3 },
-    { value: tierToHealthScore(gradeSttMdr(metrics.stt.mdr)), weight: 3 },
-    {
-      value: tierToHealthScore(
-        metrics.summary.hallucination_ratio == null
-          ? "poor"
-          : gradeHallucinationRatio(metrics.summary.hallucination_ratio)
-      ),
-      weight: 3,
-    },
-    {
-      value: tierToHealthScore(
-        metrics.summary.summary_mdr == null
-          ? "poor"
-          : gradeSummaryMdr(metrics.summary.summary_mdr)
-      ),
-      weight: 3,
-    },
+    { tier: tier(metrics.stt.pii_protection, gradePiiProtection), weight: 3 },
+    { tier: tier(metrics.stt.mdr, gradeSttMdr), weight: 3 },
+    { tier: tier(metrics.summary.hallucination_ratio, gradeHallucinationRatio), weight: 3 },
+    { tier: tier(metrics.summary.summary_mdr, gradeSummaryMdr), weight: 3 },
   ];
 
-  const num = weighted.reduce((acc, x) => acc + x.value * x.weight, 0);
-  const den = weighted.reduce((acc, x) => acc + x.weight, 0); // 23
+  const scored = weighted.filter((w): w is { tier: MetricTier; weight: number } => w.tier !== null);
+  if (scored.length === 0) return 0;
+  const num = scored.reduce((acc, x) => acc + tierToHealthScore(x.tier) * x.weight, 0);
+  const den = scored.reduce((acc, x) => acc + x.weight, 0);
   return Math.round((num / den) * 100);
 }
 
@@ -160,12 +128,12 @@ export function aggregateEvaluationItems(
     ),
     stt: {
       velocityRatio: avg(st.map((s) => s.stt_velocity)),
-      uer: avg(st.map((s) => s.uer)),
-      piiProtection: avg(st.map((s) => s.pii_protection)),
-      mmr: avg(st.map((s) => s.mmr)),
-      mdr: avg(st.map((s) => s.mdr)),
-      diarizationAccuracy: avg(st.map((s) => s.diarization_accuracy)),
-      redundancyRatio: avg(st.map((s) => s.redundancy_ratio)),
+      uer: avgNullable(st.map((s) => s.uer)),
+      piiProtection: avgNullable(st.map((s) => s.pii_protection)),
+      mmr: avgNullable(st.map((s) => s.mmr)),
+      mdr: avgNullable(st.map((s) => s.mdr)),
+      diarizationAccuracy: avgNullable(st.map((s) => s.diarization_accuracy)),
+      redundancyRatio: avgNullable(st.map((s) => s.redundancy_ratio)),
     },
     summary: {
       summarizationVelocity01: avgNullable(
@@ -190,6 +158,32 @@ export function aggregateEvaluationItems(
     perCaseComposite,
     sampleCount: sorted.length,
   };
+}
+
+/** STT 레이더 등급 — null 이면 해당 축 neutral (velocityRatio는 항상 number) */
+export function tiersForSttRadarNullable(values: {
+  sttVelocityRatio: number;
+  uer: number | null;
+  piiProtection: number | null;
+  mmr: number | null;
+  mdr: number | null;
+  diarizationAccuracy: number | null;
+  redundancyRatio: number | null;
+}): Array<MetricTier | "neutral"> {
+  const t = (
+    v: number | null,
+    fn: (x: number) => MetricTier
+  ): MetricTier | "neutral" => (v === null ? "neutral" : fn(v));
+
+  return [
+    gradeSttVelocityRatio(values.sttVelocityRatio),
+    t(values.uer, gradeUer),
+    t(values.piiProtection, gradePiiProtection),
+    t(values.mmr, gradeMmr),
+    t(values.mdr, gradeSttMdr),
+    t(values.diarizationAccuracy, gradeDiarizationAccuracy),
+    t(values.redundancyRatio, gradeRedundancyRatio),
+  ];
 }
 
 /** Summary 레이더 등급 — null 이면 해당 축 neutral */

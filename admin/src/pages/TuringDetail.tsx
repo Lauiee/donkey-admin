@@ -231,7 +231,7 @@ export function TuringDetail() {
             </div>
             <div>
               <h4 className="mb-1.5 text-xs font-semibold text-brand-slate">
-                Summary (SOAP)
+                Summary (CIAR)
               </h4>
               <MetricTable rows={summaryRows} />
             </div>

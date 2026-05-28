@@ -419,7 +419,7 @@ export function sttVelocityRatioToRadius01(ratio: number): number {
   return clamp(1 - ratio / vmax, 0, 1);
 }
 
-/** 0~1 비율, 낮을수록 우수(UER·MMR 등) — 레이더에서는 클수록 바깥 = 좋음 */
+/** 0~1 비율, 낮을수록 우수(UER·CKM 등) — 레이더에서는 클수록 바깥 = 좋음 */
 export function lowerRatioToRadius01(ratio: number): number {
   return clamp(1 - clamp(ratio, 0, 1), 0, 1);
 }
