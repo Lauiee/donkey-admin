@@ -1,6 +1,13 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getRole, isDevAuthBypass, setRole, setToken } from "../auth";
+import {
+  deriveTuringDomainFromUser,
+  getRole,
+  isDevAuthBypass,
+  setRole,
+  setToken,
+  setTuringDomain,
+} from "../auth";
 import { getMe, login } from "../api";
 import { BrandLogo } from "../components/BrandLogo";
 
@@ -27,6 +34,7 @@ export function Login() {
       const me = await getMe();
       const role = me.role === "admin" ? "admin" : "client";
       setRole(role);
+      setTuringDomain(deriveTuringDomainFromUser(me));
       navigate(role === "admin" ? "/inquiry" : "/dashboard", {
         replace: true,
       });

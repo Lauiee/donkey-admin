@@ -9,7 +9,6 @@ import {
   metricThresholdLegendBySlug,
   sttVelocityRatioToRadius01,
   summarizationVelocityToRadius01,
-  tiersForSttRadarNullable,
   type MetricTier,
 } from "./metricGrades";
 import {
@@ -21,20 +20,15 @@ import {
 import { formatMetricValue } from "./turingFormat";
 import {
   CS_DETAIL_METRICS,
-  STT_METRIC_DESCRIPTIONS,
-  STT_METRIC_SLUGS,
-  STT_RADAR_CHART_LABELS,
-  STT_RADAR_LIST_LABELS,
-  SUMMARY_METRIC_DESCRIPTIONS,
-  SUMMARY_METRIC_SLUGS,
-  SUMMARY_RADAR_CHART_LABELS,
-  SUMMARY_RADAR_LIST_LABELS,
   TURING_EVALUATIONS_PAGE_SIZE,
   VELOCITY_METRIC_DESCRIPTIONS,
 } from "./turingConfig";
+import { getDetailMetricsForDomain, getTuringLabelSet } from "./turingLabels";
+import { getTuringDomain } from "../auth";
 import { TuringLineChart } from "./TuringLineChart";
 import {
   aggregateEvaluationItems,
+  tiersForSttRadarNullable,
   tiersForSummaryRadarNullable,
   type TuringDemoState,
 } from "./turingAggregate";
@@ -52,7 +46,7 @@ import { TURING_GAUGE_THUMB_LINE } from "./turingGaugeTheme";
  * 목데이터 모드. true 이면 실제 Turing API 대신 고정 목업 데이터를 사용한다.
  * (실 API 연동 복구 시 false 로 변경 — .env 의 VITE_TURING_API_KEY 사용)
  */
-const USE_MOCK_DATA = true;
+const USE_MOCK_DATA = false;
 
 const SAMP = {
   processingVelocity: [
@@ -463,10 +457,19 @@ export function TuringDashboardView({
     [items]
   );
 
+  // 로그인 계정에서 결정된 Turing 도메인 — cnt(상담) | hippo(의료).
+  // 라벨/설명/Summary 섹션 표기가 도메인별로 갈린다. 슬러그·등급 로직은 공통.
+  const domain = useMemo(() => getTuringDomain(), []);
+  const labels = useMemo(() => getTuringLabelSet(domain), [domain]);
+  const csDetailMetricsForDomain = useMemo(
+    () => getDetailMetricsForDomain(domain, CS_DETAIL_METRICS),
+    [domain]
+  );
+
   // CS 도메인 상세 지표(엑셀 v0.2) — 전체 표시, CS 특화(하늘색)는 카드에서 강조.
   const csDetailItems = useMemo<TuringMetricGridItem[]>(
     () =>
-      CS_DETAIL_METRICS.map((m) => {
+      csDetailMetricsForDomain.map((m) => {
         const raw = m.read(demo);
         const unsupported = raw === null;
         const tier: MetricTier | "neutral" =
@@ -492,7 +495,7 @@ export function TuringDashboardView({
           csSpecial: CS_SPECIAL_SLUGS.has(m.slug),
         };
       }),
-    [demo, sttMetricTrendSeries, summaryMetricTrendSeries]
+    [csDetailMetricsForDomain, demo, sttMetricTrendSeries, summaryMetricTrendSeries]
   );
 
   const sttTiers = tiersForSttRadarNullable({
@@ -573,20 +576,20 @@ export function TuringDashboardView({
   );
 
   // Detailed Metrics에서는 Velocity 섹션과 중복되는 속도 지표(첫 항목)를 제외한다.
-  const sttDetailChartLabels = STT_RADAR_CHART_LABELS.slice(1);
-  const sttDetailListLabels = STT_RADAR_LIST_LABELS.slice(1);
-  const sttDetailDescriptions = STT_METRIC_DESCRIPTIONS.slice(1);
-  const sttDetailSlugs = STT_METRIC_SLUGS.slice(1);
+  const sttDetailChartLabels = labels.sttRadarChartLabels.slice(1);
+  const sttDetailListLabels = labels.sttRadarListLabels.slice(1);
+  const sttDetailDescriptions = labels.sttMetricDescriptions.slice(1);
+  const sttDetailSlugs = labels.sttMetricSlugs.slice(1);
   const sttDetailValues = sttRadarDisplayValues.slice(1);
   const sttDetailRadii = sttRadarChartRadii.slice(1);
   const sttDetailTiers = sttTiers.slice(1);
   const sttDetailRowFormats = STT_ROW_FORMATS.slice(1);
   const sttDetailTrendSeries = sttMetricTrendSeries.slice(1);
 
-  const summaryDetailChartLabels = SUMMARY_RADAR_CHART_LABELS.slice(1);
-  const summaryDetailListLabels = SUMMARY_RADAR_LIST_LABELS.slice(1);
-  const summaryDetailDescriptions = SUMMARY_METRIC_DESCRIPTIONS.slice(1);
-  const summaryDetailSlugs = SUMMARY_METRIC_SLUGS.slice(1);
+  const summaryDetailChartLabels = labels.summaryRadarChartLabels.slice(1);
+  const summaryDetailListLabels = labels.summaryRadarListLabels.slice(1);
+  const summaryDetailDescriptions = labels.summaryMetricDescriptions.slice(1);
+  const summaryDetailSlugs = labels.summaryMetricSlugs.slice(1);
   const summaryDetailValues = summaryRadarDisplayValues.slice(1);
   const summaryDetailRadii = summaryRadarChartRadii.slice(1);
   const summaryDetailTiers = summaryTiers.slice(1);
@@ -637,7 +640,7 @@ export function TuringDashboardView({
               rowFormats={sttDetailRowFormats}
             />
             <HeptagonRadar
-              title="Summary (CIAR)"
+              title={labels.summarySectionTitle}
               values={summaryDetailValues}
               chartRadii={summaryDetailRadii}
               chartLabels={summaryDetailChartLabels}
@@ -645,6 +648,35 @@ export function TuringDashboardView({
               metricDescriptions={summaryDetailDescriptions}
               tiers={summaryDetailTiers}
               rowFormats={summaryDetailRowFormats}
+            />
+          </div>
+        ) : domain === "hippo" ? (
+          // hippo 도메인 — main 브랜치 시절 카드 레이아웃(STT/Summary 두 컬럼 스택).
+          // CS 특화 5종(KCR/IDR/AC/RRS/CSR Turn)은 의료 도메인에 해당 없으므로 노출하지 않는다.
+          <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+            <TuringMetricsStack
+              heading="STT"
+              metaPrefix="STT"
+              slugs={sttDetailSlugs}
+              listLabels={sttDetailListLabels}
+              descriptions={sttDetailDescriptions}
+              legendSource="stt"
+              values={sttDetailValues}
+              tiers={sttDetailTiers}
+              rowFormats={sttDetailRowFormats}
+              trendSeriesByMetric={sttDetailTrendSeries}
+            />
+            <TuringMetricsStack
+              heading={labels.summarySectionTitle}
+              metaPrefix="SUMMARY"
+              slugs={summaryDetailSlugs}
+              listLabels={summaryDetailListLabels}
+              descriptions={summaryDetailDescriptions}
+              legendSource="summary"
+              values={summaryDetailValues}
+              tiers={summaryDetailTiers}
+              rowFormats={summaryDetailRowFormats}
+              trendSeriesByMetric={summaryDetailTrendSeries}
             />
           </div>
         ) : (

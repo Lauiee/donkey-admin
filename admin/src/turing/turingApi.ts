@@ -1,7 +1,11 @@
 /**
  * STT 채점(Turing) API — Base URL·X-API-Key
  * @see 프로젝트 외부 명세 API_Spec.md
+ *
+ * 로그인 계정의 도메인(cnt/hippo)에 따라 다른 백엔드를 호출한다 — getTuringBaseUrl/getTuringApiKey 참고.
  */
+
+import { getTuringDomain } from "../auth";
 
 export interface SttMetricsApi {
   /** 로그 기반 결정값 — 항상 산출 */
@@ -65,10 +69,20 @@ export interface EvaluationFullApi extends EvaluationListItemApi {
   details: EvaluationDetailsApi;
 }
 
+/**
+ * Turing API base — 로그인한 계정의 도메인(cnt/hippo)에 따라 다른 백엔드.
+ *   cnt   : VITE_TURING_API_BASE       (기본 dev 프록시 /turing-api       → 127.0.0.1:4314 / cntt.turing.intcorp.ai)
+ *   hippo : VITE_TURING_API_BASE_HIPPO (기본 dev 프록시 /turing-api-hippo → 127.0.0.1:4313 / turing.donkey.ai.kr)
+ */
 function getTuringBaseUrl(): string {
-  const env = (import.meta.env.VITE_TURING_API_BASE as string | undefined)?.trim();
+  const domain = getTuringDomain();
+  const envKey =
+    domain === "hippo" ? "VITE_TURING_API_BASE_HIPPO" : "VITE_TURING_API_BASE";
+  const env = (import.meta.env[envKey] as string | undefined)?.trim();
   if (env) return env.replace(/\/$/, "");
-  if (import.meta.env.DEV) return "/turing-api";
+  if (import.meta.env.DEV) {
+    return domain === "hippo" ? "/turing-api-hippo" : "/turing-api";
+  }
   return "";
 }
 
@@ -109,15 +123,22 @@ export async function fetchTuringHealth(): Promise<TuringHealthResponse> {
   return res.json();
 }
 
+function getTuringApiKey(): string | undefined {
+  const domain = getTuringDomain();
+  const envKey =
+    domain === "hippo" ? "VITE_TURING_API_KEY_HIPPO" : "VITE_TURING_API_KEY";
+  return (import.meta.env[envKey] as string | undefined)?.trim();
+}
+
 function turingHeaders(): HeadersInit {
-  const key = (import.meta.env.VITE_TURING_API_KEY as string | undefined)?.trim();
+  const key = getTuringApiKey();
   const h: Record<string, string> = { Accept: "application/json" };
   if (key) h["X-API-Key"] = key;
   return h;
 }
 
 export function hasTuringApiKey(): boolean {
-  return !!((import.meta.env.VITE_TURING_API_KEY as string | undefined)?.trim());
+  return !!getTuringApiKey();
 }
 
 export async function fetchTuringEvaluations(params: {

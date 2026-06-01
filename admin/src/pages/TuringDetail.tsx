@@ -5,10 +5,8 @@ import {
   hasTuringApiKey,
   type EvaluationFullApi,
 } from "../turing/turingApi";
-import {
-  STT_RADAR_LIST_LABELS,
-  SUMMARY_RADAR_LIST_LABELS,
-} from "../turing/turingConfig";
+import { getTuringLabelSet } from "../turing/turingLabels";
+import { getTuringDomain } from "../auth";
 import { formatRawRatioAsPercent } from "../turing/turingFormat";
 
 /** 0~1 비율 지표는 %, 속도/압축률 등 비-비율 지표는 원시 숫자로 표기 */
@@ -125,39 +123,40 @@ export function TuringDetail() {
     );
   }
 
+  const labels = getTuringLabelSet(getTuringDomain());
   const m = detail.metrics;
   const sttRows = [
-    { label: STT_RADAR_LIST_LABELS[0], value: fmtNum(m.stt.stt_velocity) },
-    { label: STT_RADAR_LIST_LABELS[1], value: fmtRatio(m.stt.uer) },
-    { label: STT_RADAR_LIST_LABELS[2], value: fmtRatio(m.stt.pii_protection) },
-    { label: STT_RADAR_LIST_LABELS[3], value: fmtRatio(m.stt.mmr) },
-    { label: STT_RADAR_LIST_LABELS[4], value: fmtRatio(m.stt.mdr) },
+    { label: labels.sttRadarListLabels[0], value: fmtNum(m.stt.stt_velocity) },
+    { label: labels.sttRadarListLabels[1], value: fmtRatio(m.stt.uer) },
+    { label: labels.sttRadarListLabels[2], value: fmtRatio(m.stt.pii_protection) },
+    { label: labels.sttRadarListLabels[3], value: fmtRatio(m.stt.mmr) },
+    { label: labels.sttRadarListLabels[4], value: fmtRatio(m.stt.mdr) },
     {
-      label: STT_RADAR_LIST_LABELS[5],
+      label: labels.sttRadarListLabels[5],
       value: fmtRatio(m.stt.diarization_accuracy),
     },
     {
-      label: STT_RADAR_LIST_LABELS[6],
+      label: labels.sttRadarListLabels[6],
       value: fmtRatio(m.stt.redundancy_ratio),
     },
   ];
   const summaryRows = [
     {
-      label: SUMMARY_RADAR_LIST_LABELS[0],
+      label: labels.summaryRadarListLabels[0],
       value: fmtNum(m.summary.summarization_velocity),
     },
     {
-      label: SUMMARY_RADAR_LIST_LABELS[1],
+      label: labels.summaryRadarListLabels[1],
       value: fmtRatio(m.summary.hallucination_ratio),
     },
-    { label: SUMMARY_RADAR_LIST_LABELS[2], value: fmtRatio(m.summary.ssr) },
-    { label: SUMMARY_RADAR_LIST_LABELS[3], value: fmtNum(m.summary.icr) },
+    { label: labels.summaryRadarListLabels[2], value: fmtRatio(m.summary.ssr) },
+    { label: labels.summaryRadarListLabels[3], value: fmtNum(m.summary.icr) },
     {
-      label: SUMMARY_RADAR_LIST_LABELS[4],
+      label: labels.summaryRadarListLabels[4],
       value: fmtRatio(m.summary.summary_mdr),
     },
-    { label: SUMMARY_RADAR_LIST_LABELS[5], value: fmtRatio(m.summary.mir) },
-    { label: SUMMARY_RADAR_LIST_LABELS[6], value: fmtRatio(m.summary.ssa) },
+    { label: labels.summaryRadarListLabels[5], value: fmtRatio(m.summary.mir) },
+    { label: labels.summaryRadarListLabels[6], value: fmtRatio(m.summary.ssa) },
   ];
 
   return (
@@ -231,7 +230,7 @@ export function TuringDetail() {
             </div>
             <div>
               <h4 className="mb-1.5 text-xs font-semibold text-brand-slate">
-                Summary (CIAR)
+                {labels.summarySectionTitle}
               </h4>
               <MetricTable rows={summaryRows} />
             </div>
